@@ -1,85 +1,99 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+  <div id="app" class="d-flex flex-column min-vh-100">
+    <AppHeader />
+    <main class="flex-grow-1">
+      <router-view />
+    </main>
+    <AppFooter />
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import AppHeader from '@/components/AppHeader.vue'
+import AppFooter from '@/components/AppFooter.vue'
+import { useAuthStore } from '@/stores/auth'
+
+// Bootstrap JS imports
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+
+const authStore = useAuthStore()
+
+onMounted(() => {
+  authStore.initializeAuth()
+})
+</script>
+
+<style>
+/* Bootstrap CSS import */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* Custom CSS variables */
+:root {
+  --bs-primary: #0066CC;
+  --bs-primary-rgb: 0, 102, 204;
+  --bs-success: #28A745;
+  --bs-warning: #FFC107;
+  --bs-info: #17A2B8;
+  --bs-danger: #DC3545;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+/* Global styles */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+.text-light-emphasis {
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+/* Smooth transitions */
+* {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
+/* Focus states for accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
 }
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
+/* Loading spinner animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-nav a:first-of-type {
-  border: 0;
+.spinner-border {
+  animation: spin 0.75s linear infinite;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+/* Responsive utilities */
+@media (max-width: 576px) {
+  .display-1 { font-size: 2.5rem; }
+  .display-2 { font-size: 2rem; }
+  .display-3 { font-size: 1.75rem; }
+  .display-4 { font-size: 1.5rem; }
+  .display-5 { font-size: 1.25rem; }
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--bs-primary);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 1000;
+}
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+.skip-link:focus {
+  top: 0;
 }
 </style>
