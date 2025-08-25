@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 // Import components
 import Home from '@/views/Home.vue'
 import Contact from '@/views/Contact.vue'
+import About from '@/views/About.vue'
 
 
 const router = createRouter({
@@ -18,6 +19,11 @@ const router = createRouter({
       path: '/contact',
       name: 'Contact',
       component: Contact
+    },
+    {
+      path: '/about',
+      name: 'About',
+      component: About
     },
   ]
 })
