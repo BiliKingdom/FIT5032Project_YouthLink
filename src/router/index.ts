@@ -5,14 +5,17 @@ import { useAuthStore } from '@/stores/auth'
 import Home from '@/views/Home.vue'
 import InfoList from '@/views/InfoList.vue'
 import InfoTopic from '@/views/InfoTopic.vue'
-
+import SupportMap from '@/views/SupportMap.vue'
+import BookAppointment from '@/views/BookAppointment.vue'
 import ResourcesList from '@/views/ResourcesList.vue'
-
+import EventsList from '@/views/EventsList.vue'
+import GetInvolved from '@/views/GetInvolved.vue'
 import About from '@/views/About.vue'
 import Contact from '@/views/Contact.vue'
 import Login from '@/views/auth/Login.vue'
 import Register from '@/views/auth/Register.vue'
-
+import Profile from '@/views/Profile.vue'
+import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -32,14 +35,32 @@ const router = createRouter({
       name: 'InfoTopic',
       component: InfoTopic
     },
-
+    {
+      path: '/support/map',
+      name: 'SupportMap',
+      component: SupportMap
+    },
+    {
+      path: '/support/book',
+      name: 'BookAppointment',
+      component: BookAppointment,
+      meta: { requiresAuth: true }
+    },
     {
       path: '/resources/list',
       name: 'ResourcesList',
       component: ResourcesList
     },
-
-
+    {
+      path: '/resources/events',
+      name: 'EventsList',
+      component: EventsList
+    },
+    {
+      path: '/involved',
+      name: 'GetInvolved',
+      component: GetInvolved
+    },
     {
       path: '/about',
       name: 'About',
@@ -62,7 +83,18 @@ const router = createRouter({
       component: Register,
       meta: { guestOnly: true }
     },
-
+    {
+      path: '/account',
+      name: 'Profile',
+      component: Profile,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin',
+      name: 'AdminDashboard',
+      component: AdminDashboard,
+      meta: { requiresAdmin: true }
+    }
   ]
 })
 
