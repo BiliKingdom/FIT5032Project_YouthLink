@@ -54,9 +54,9 @@
               <li><router-link to="/resources/events" class="dropdown-item">Events</router-link></li>
             </ul>
           </li>
-          <li class="nav-item">
+          <!-- <li class="nav-item">
             <router-link to="/involved" class="nav-link">Get Involved</router-link>
-          </li>
+          </li> -->
           <li class="nav-item">
             <router-link to="/about" class="nav-link">About</router-link>
           </li>
