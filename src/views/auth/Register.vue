@@ -182,7 +182,8 @@ interface RegisterForm {
   displayName: string
   email: string
   password: string
-  confirmPassword: string
+  confirmPassword: string 
+
   dateOfBirth: string
   agreeToTerms: boolean
   subscribeNewsletter: boolean
@@ -195,7 +196,7 @@ const form = ref<RegisterForm>({
   displayName: '',
   email: '',
   password: '',
-  confirmPassword: '',
+
   dateOfBirth: '',
   agreeToTerms: false,
   subscribeNewsletter: false
@@ -205,7 +206,7 @@ const errors = ref({
   displayName: '',
   email: '',
   password: '',
-  confirmPassword: '',
+
   dateOfBirth: '',
   agreeToTerms: ''
 })
