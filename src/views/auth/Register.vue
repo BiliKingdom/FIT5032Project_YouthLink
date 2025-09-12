@@ -73,6 +73,7 @@
                   </div>
                 </div>
 
+                
                 <div class="col-md-6">
                   <label for="confirmPassword" class="form-label">Confirm Password</label>
                   <input
@@ -87,6 +88,8 @@
                   >
                   <div v-if="errors.confirmPassword" class="invalid-feedback">{{ errors.confirmPassword }}</div>
                 </div>
+  
+
 
                 <div class="col-12">
                   <label for="dateOfBirth" class="form-label">Date of Birth</label>
