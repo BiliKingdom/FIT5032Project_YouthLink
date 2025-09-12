@@ -1,9 +1,9 @@
 <template>
-  <div class="container py-5">
+  <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-5">
       <div>
         <h1 class="display-6 fw-bold mb-2">Admin Dashboard</h1>
-        <p class="text-muted">Manage your mental health platform</p>
+        <p class="text-muted">Welcome back, {{ authStore.user?.displayName }}! Manage your mental health platform</p>
       </div>
       <div class="d-flex gap-2">
         <button class="btn btn-outline-primary">
@@ -207,6 +207,9 @@ import {
   Users, Calendar, BookOpen, Star, TrendingUp, BarChart, Activity, 
   Zap, Mail, Shield, Download, Plus 
 } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 interface Stats {
   totalUsers: number
