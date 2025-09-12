@@ -207,6 +207,9 @@ import {
   Users, Calendar, BookOpen, Star, TrendingUp, BarChart, Activity, 
   Zap, Mail, Shield, Download, Plus 
 } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 interface Stats {
   totalUsers: number
