@@ -1,21 +1,10 @@
 <template>
-  <div id="app">
-    <!-- admin -->
-    <div v-if="authStore.isAdmin && isAdminRoute" class="admin-layout">
-      <AdminHeader />
-      <div class="admin-content">
-        <router-view />
-      </div>
-    </div>
-    
-    <!-- uer -->
-    <div v-else class="d-flex flex-column min-vh-100">
-      <AppHeader />
-      <main class="flex-grow-1">
-        <router-view />
-      </main>
-      <AppFooter />
-    </div>
+  <div id="app" class="d-flex flex-column min-vh-100">
+    <AppHeader />
+    <main class="flex-grow-1">
+      <router-view />
+    </main>
+    <AppFooter />
   </div>
 </template>
 
@@ -31,11 +20,6 @@ import { useAuthStore } from '@/stores/auth'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const authStore = useAuthStore()
-const route = useRoute()
-
-const isAdminRoute = computed(() => {
-  return route.path.startsWith('/admin')
-})
 
 onMounted(() => {
   authStore.initializeAuth()
@@ -113,15 +97,5 @@ body {
 
 .skip-link:focus {
   top: 0;
-}
-
-
-.admin-layout {
-  min-height: 100vh;
-  background-color: #f8f9fa;
-}
-
-.admin-content {
-  padding: 0;
 }
 </style>

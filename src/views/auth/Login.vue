@@ -188,7 +188,12 @@ const handleLogin = async () => {
   const result = await authStore.login(form.value.email, form.value.password)
   
   if (result.success) {
-    router.push('/')
+    // 根据用户角色重定向
+    if (authStore.isAdmin) {
+      router.push('/admin')
+    } else {
+      router.push('/')
+    }
   } else {
     loginError.value = result.error || 'Login failed. Please try again.'
   }
