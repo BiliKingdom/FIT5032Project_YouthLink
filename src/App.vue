@@ -1,23 +1,42 @@
 <template>
-  <div id="app" class="d-flex flex-column min-vh-100">
-    <AppHeader />
-    <main class="flex-grow-1">
-      <router-view />
-    </main>
-    <AppFooter />
+  <div id="app">
+    <!-- 管理员布局 -->
+    <div v-if="authStore.isAdmin && isAdminRoute" class="admin-layout">
+      <AdminHeader />
+      <div class="admin-content">
+        <router-view />
+      </div>
+    </div>
+    
+    <!-- 普通用户布局 -->
+    <div v-else class="d-flex flex-column min-vh-100">
+      <AppHeader />
+      <main class="flex-grow-1">
+        <router-view />
+      </main>
+      <AppFooter />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
+import AdminHeader from '@/components/AdminHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 
 // Bootstrap JS imports
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const authStore = useAuthStore()
+const route = useRoute()
+
+// 检查是否是管理员路由
+const isAdminRoute = computed(() => {
+  return route.path.startsWith('/admin')
+})
 
 onMounted(() => {
   authStore.initializeAuth()
@@ -95,5 +114,15 @@ body {
 
 .skip-link:focus {
   top: 0;
+}
+
+/* 管理员布局样式 */
+.admin-layout {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.admin-content {
+  padding: 0;
 }
 </style>
