@@ -107,10 +107,8 @@ router.beforeEach((to, from, next) => {
   } else if (to.meta.requiresAdmin && authStore.user?.role !== 'admin') {
     next('/')
   } else if (to.meta.requiresAdmin && authStore.isAdmin) {
-    // 管理员访问管理员页面，允许通过
     next()
   } else if (to.meta.guestOnly && authStore.isLoggedIn) {
-    // 如果已登录用户访问登录/注册页面，根据角色重定向
     if (authStore.isAdmin) {
       next('/admin')
     } else {
