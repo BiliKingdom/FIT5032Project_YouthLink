@@ -34,6 +34,7 @@
                       <div v-if="errors.name" class="invalid-feedback">{{ errors.name }}</div>
                     </div>
 
+
                     <!-- Email -->
                     <div class="col-md-6">
                       <label for="email" class="form-label">Email Address *</label>
@@ -49,6 +50,7 @@
                       <div v-if="errors.email" class="invalid-feedback">{{ errors.email }}</div>
                     </div>
 
+
                     <!-- Phone -->
                     <div class="col-md-6">
                       <label for="phone" class="form-label">Phone Number</label>
@@ -63,6 +65,7 @@
                       >
                       <div v-if="errors.phone" class="invalid-feedback">{{ errors.phone }}</div>
                     </div>
+
 
                     <!-- Subject -->
                     <div class="col-md-6">
@@ -173,7 +176,6 @@
           <!-- Contact Information -->
           <div class="col-lg-4">
             <div class="sticky-top" style="top: 2rem;">
-              <!-- 这里保持不变 -->
             </div>
           </div>
         </div>
