@@ -9,17 +9,20 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useAuthStore } from '@/stores/auth'
+import { onMounted } from 'vue'
 
 // Bootstrap JS imports
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const authStore = useAuthStore()
 
-// Auth is already initialized in main.ts
+// Initialize auth when app mounts
+onMounted(() => {
+  authStore.initializeAuth()
+})
 </script>
 
 <style>

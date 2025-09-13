@@ -102,22 +102,13 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
-  // Wait for auth to be initialized
-  if (!authStore.initialized) {
-    authStore.initializeAuth().then(() => {
-      // Re-run the navigation guard after initialization
-      router.push(to.fullPath)
-    })
-    return
-  }
-  
+  // Check auth requirements
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
     next('/auth/login')
   } else if (to.meta.requiresAdmin && authStore.user?.role !== 'admin') {
     next('/')
-  } else if (to.meta.requiresAdmin && authStore.isAdmin) {
-    next()
   } else if (to.meta.guestOnly && authStore.isLoggedIn) {
+    // Redirect logged-in users away from auth pages
     if (authStore.isAdmin) {
       next('/admin')
     } else {

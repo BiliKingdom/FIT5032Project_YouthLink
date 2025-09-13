@@ -2,7 +2,6 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import { useAuthStore } from '@/stores/auth'
 
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
@@ -14,8 +13,9 @@ import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'   
 
 const app = createApp(App)
+const pinia = createPinia()
 
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
 
 app.use(PrimeVue, { theme: { preset: Aura } })
@@ -23,14 +23,4 @@ app.use(PrimeVue, { theme: { preset: Aura } })
 app.component('DataTable', DataTable)
 app.component('Column', Column)
 
-// Initialize auth before mounting
-const pinia = createPinia()
-app.use(pinia)
-
-const authStore = useAuthStore()
-
-// Wait for auth initialization before mounting
-authStore.initializeAuth().then(() => {
-  app.mount('#app')
-})
-
+app.mount('#app')
