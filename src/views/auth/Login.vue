@@ -98,19 +98,17 @@
           <div class="card-header bg-info bg-opacity-10">
             <h6 class="mb-0 text-info">
               <Info class="me-2" :size="16" />
-              Demo Accounts
+              Admin Account Creation Guide
             </h6>
           </div>
           <div class="card-body p-3">
-            <div class="row g-2 text-sm">
-              <div class="col-12">
-                <strong>Admin Account:</strong><br>
-                <code>admin@mindwellnfp.org</code> / <code>password</code>
-              </div>
-              <div class="col-12">
-                <strong>User Account:</strong><br>
-                <code>user@example.com</code> / <code>password</code>
-              </div>
+            <div class="text-sm">
+              <p class="mb-2"><strong>To create an admin account:</strong></p>
+              <ol class="mb-0">
+                <li>Click "Create one here" link below</li>
+                <li>Check "Register as Administrator" option on registration page</li>
+                <li>Complete registration to access admin features</li>
+              </ol>
             </div>
           </div>
         </div>

@@ -164,7 +164,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const register = async (email: string, password: string, displayName: string) => {
+  const register = async (email: string, password: string, displayName: string, isAdmin: boolean = false) => {
     loading.value = true
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
@@ -179,7 +179,7 @@ export const useAuthStore = defineStore('auth', () => {
         id: userCredential.user.uid,
         displayName: displayName,
         email: email,
-        role: 'user',
+        role: isAdmin ? 'admin' : 'user',
         createdAt: new Date().toISOString()
       }
       user.value = userProfile
@@ -188,7 +188,7 @@ export const useAuthStore = defineStore('auth', () => {
       setDoc(doc(db, 'users', userCredential.user.uid), {
         displayName: displayName,
         email: email,
-        role: 'user',
+        role: isAdmin ? 'admin' : 'user',
         createdAt: serverTimestamp()
       }).catch(error => {
         console.warn('Failed to create user document in Firestore (non-blocking):', error)
