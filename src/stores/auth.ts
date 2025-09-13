@@ -174,16 +174,25 @@ export const useAuthStore = defineStore('auth', () => {
         displayName: displayName
       })
       
-      // Create user document in Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
+      // Create user profile immediately for faster UI response
+      const userProfile: User = {
+        id: userCredential.user.uid,
+        displayName: displayName,
+        email: email,
+        role: 'user',
+        createdAt: new Date().toISOString()
+      }
+      user.value = userProfile
+      
+      // Create user document in Firestore asynchronously (don't wait)
+      setDoc(doc(db, 'users', userCredential.user.uid), {
         displayName: displayName,
         email: email,
         role: 'user',
         createdAt: serverTimestamp()
+      }).catch(error => {
+        console.warn('Failed to create user document in Firestore (non-blocking):', error)
       })
-      
-      const userProfile = await createUserProfile(userCredential.user)
-      user.value = userProfile
       
       return { success: true }
     } catch (error: any) {
