@@ -3,7 +3,7 @@
     <div class="text-center mb-5">
       <h1 class="display-5 fw-bold mb-3">Mental Health Resources</h1>
       <p class="lead text-muted">
-        Browse our collection of articles, guides, and educational materials
+        Browse our collection of articles, guides, and educational materials. Rate resources to help others find the best content.
       </p>
     </div>
 
@@ -81,17 +81,20 @@
                         v-for="i in 5"
                         :key="i"
                         :size="14"
-                        :class="i <= resource.rating ? 'text-warning' : 'text-muted'"
-                        :fill="i <= resource.rating ? 'currentColor' : 'none'"
+                        :class="i <= Math.round(resource.rating) ? 'text-warning' : 'text-muted'"
+                        :fill="i <= Math.round(resource.rating) ? 'currentColor' : 'none'"
                       />
                     </div>
-                    <small class="text-muted">({{ resource.rating }}/5)</small>
+                    <small class="text-muted">({{ resource.rating.toFixed(1) }}/5 - {{ resource.ratingCount }} reviews)</small>
                   </div>
                 </td>
                 <td>
                   <div class="btn-group btn-group-sm">
                     <button class="btn btn-outline-primary" @click="viewResource(resource)">
                       <Eye :size="14" />
+                    </button>
+                    <button class="btn btn-outline-warning" @click="rateResource(resource)">
+                      <Star :size="14" />
                     </button>
                     <button class="btn btn-outline-success" @click="downloadResource(resource)">
                       <Download :size="14" />
@@ -139,13 +142,94 @@
       </div>
     </div>
   </div>
+
+  <!-- Rating Modal -->
+  <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="ratingModalLabel">Rate Resource</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div v-if="selectedResource" class="text-center">
+            <h6 class="mb-3">{{ selectedResource.title }}</h6>
+            <p class="text-muted mb-4">{{ selectedResource.description }}</p>
+            
+            <div class="rating-stars mb-4">
+              <Star
+                v-for="i in 5"
+                :key="i"
+                :size="32"
+                :class="i <= userRating ? 'text-warning' : 'text-muted'"
+                :fill="i <= userRating ? 'currentColor' : 'none'"
+                class="rating-star"
+                @click="setRating(i)"
+                @mouseover="hoverRating = i"
+                @mouseleave="hoverRating = 0"
+                style="cursor: pointer;"
+              />
+            </div>
+            
+            <div class="mb-3">
+              <label for="reviewComment" class="form-label">Add a comment (optional)</label>
+              <textarea
+                v-model="reviewComment"
+                id="reviewComment"
+                class="form-control"
+                rows="3"
+                placeholder="Share your thoughts about this resource..."
+                maxlength="500"
+              ></textarea>
+              <div class="form-text">{{ reviewComment.length }}/500 characters</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button 
+            type="button" 
+            class="btn btn-primary" 
+            @click="submitRating"
+            :disabled="userRating === 0 || submittingRating"
+          >
+            <div v-if="submittingRating" class="spinner-border spinner-border-sm me-2" role="status"></div>
+            {{ submittingRating ? 'Submitting...' : 'Submit Rating' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success/Error Toast -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div 
+      id="ratingToast" 
+      class="toast" 
+      role="alert" 
+      aria-live="assertive" 
+      aria-atomic="true"
+    >
+      <div class="toast-header">
+        <CheckCircle v-if="toastType === 'success'" class="text-success me-2" :size="16" />
+        <AlertCircle v-else class="text-danger me-2" :size="16" />
+        <strong class="me-auto">{{ toastType === 'success' ? 'Success' : 'Error' }}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body">
+        {{ toastMessage }}
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { 
-  BookOpen, Search, ChevronUp, ChevronDown, Star, Eye, Download 
+  BookOpen, Search, ChevronUp, ChevronDown, Star, Eye, Download,
+  CheckCircle, AlertCircle
 } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
 
 interface Resource {
   id: number
@@ -155,6 +239,8 @@ interface Resource {
   type: string
   rating: number
   url: string
+  ratingCount: number
+  userRatings: { [userId: string]: { rating: number; comment: string; date: string } }
 }
 
 const searchQuery = ref('')
@@ -162,6 +248,14 @@ const sortField = ref('title')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const currentPage = ref(1)
 const itemsPerPage = 10
+const selectedResource = ref<Resource | null>(null)
+const userRating = ref(0)
+const hoverRating = ref(0)
+const reviewComment = ref('')
+const submittingRating = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error'>('success')
+const authStore = useAuthStore()
 
 const resources = ref<Resource[]>([
   {
@@ -171,7 +265,9 @@ const resources = ref<Resource[]>([
     category: 'Anxiety',
     type: 'Article',
     rating: 4.5,
-    url: '#'
+    url: '#',
+    ratingCount: 24,
+    userRatings: {}
   },
   {
     id: 2,
@@ -180,7 +276,9 @@ const resources = ref<Resource[]>([
     category: 'Depression',
     type: 'Guide',
     rating: 4.8,
-    url: '#'
+    url: '#',
+    ratingCount: 31,
+    userRatings: {}
   },
   {
     id: 3,
@@ -189,7 +287,9 @@ const resources = ref<Resource[]>([
     category: 'Stress',
     type: 'Video',
     rating: 4.2,
-    url: '#'
+    url: '#',
+    ratingCount: 18,
+    userRatings: {}
   },
   {
     id: 4,
@@ -198,7 +298,9 @@ const resources = ref<Resource[]>([
     category: 'Relationships',
     type: 'Article',
     rating: 4.6,
-    url: '#'
+    url: '#',
+    ratingCount: 27,
+    userRatings: {}
   },
   {
     id: 5,
@@ -207,7 +309,9 @@ const resources = ref<Resource[]>([
     category: 'Wellness',
     type: 'Audio',
     rating: 4.4,
-    url: '#'
+    url: '#',
+    ratingCount: 15,
+    userRatings: {}
   },
   {
     id: 6,
@@ -216,7 +320,9 @@ const resources = ref<Resource[]>([
     category: 'Wellness',
     type: 'Article',
     rating: 4.3,
-    url: '#'
+    url: '#',
+    ratingCount: 22,
+    userRatings: {}
   },
   {
     id: 7,
@@ -225,7 +331,9 @@ const resources = ref<Resource[]>([
     category: 'Self-Esteem',
     type: 'Guide',
     rating: 4.1,
-    url: '#'
+    url: '#',
+    ratingCount: 19,
+    userRatings: {}
   },
   {
     id: 8,
@@ -234,7 +342,9 @@ const resources = ref<Resource[]>([
     category: 'Crisis',
     type: 'Resource List',
     rating: 4.9,
-    url: '#'
+    url: '#',
+    ratingCount: 45,
+    userRatings: {}
   },
   {
     id: 9,
@@ -243,7 +353,9 @@ const resources = ref<Resource[]>([
     category: 'Wellness',
     type: 'Article',
     rating: 4.0,
-    url: '#'
+    url: '#',
+    ratingCount: 12,
+    userRatings: {}
   },
   {
     id: 10,
@@ -252,7 +364,9 @@ const resources = ref<Resource[]>([
     category: 'Wellness',
     type: 'Video',
     rating: 4.7,
-    url: '#'
+    url: '#',
+    ratingCount: 33,
+    userRatings: {}
   },
   {
     id: 11,
@@ -261,7 +375,9 @@ const resources = ref<Resource[]>([
     category: 'Anxiety',
     type: 'Guide',
     rating: 4.5,
-    url: '#'
+    url: '#',
+    ratingCount: 28,
+    userRatings: {}
   },
   {
     id: 12,
@@ -270,7 +386,9 @@ const resources = ref<Resource[]>([
     category: 'Support',
     type: 'Article',
     rating: 4.6,
-    url: '#'
+    url: '#',
+    ratingCount: 21,
+    userRatings: {}
   }
 ])
 
@@ -376,7 +494,88 @@ const viewResource = (resource: Resource) => {
 
 const downloadResource = (resource: Resource) => {
   console.log('Downloading resource:', resource.title)
-  // Mock resource download
+}
+
+const rateResource = (resource: Resource) => {
+  if (!authStore.isLoggedIn) {
+    showToast('Please log in to rate resources', 'error')
+    return
+  }
+  
+  selectedResource.value = resource
+  userRating.value = 0
+  reviewComment.value = ''
+  
+  // Check if user has already rated this resource
+  if (authStore.user && resource.userRatings[authStore.user.id]) {
+    const existingRating = resource.userRatings[authStore.user.id]
+    userRating.value = existingRating.rating
+    reviewComment.value = existingRating.comment
+  }
+  
+  // Show modal using Bootstrap's modal API
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('ratingModal'))
+  modal.show()
+}
+
+const setRating = (rating: number) => {
+  userRating.value = rating
+}
+
+const submitRating = async () => {
+  if (!selectedResource.value || !authStore.user || userRating.value === 0) {
+    return
+  }
+  
+  submittingRating.value = true
+  
+  try {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const resource = selectedResource.value
+    const userId = authStore.user.id
+    const wasNewRating = !resource.userRatings[userId]
+    
+    // Store the user's rating
+    resource.userRatings[userId] = {
+      rating: userRating.value,
+      comment: reviewComment.value,
+      date: new Date().toISOString()
+    }
+    
+    // Recalculate average rating
+    const ratings = Object.values(resource.userRatings).map(r => r.rating)
+    resource.rating = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+    resource.ratingCount = ratings.length
+    
+    // Hide modal
+    const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('ratingModal'))
+    modal.hide()
+    
+    // Show success message
+    showToast(
+      wasNewRating ? 'Thank you for rating this resource!' : 'Your rating has been updated!',
+      'success'
+    )
+    
+  } catch (error) {
+    console.error('Error submitting rating:', error)
+    showToast('Failed to submit rating. Please try again.', 'error')
+  } finally {
+    submittingRating.value = false
+  }
+}
+
+const showToast = (message: string, type: 'success' | 'error') => {
+  toastMessage.value = message
+  toastType.value = type
+  
+  const toastElement = document.getElementById('ratingToast')
+  if (toastElement) {
+    const toast = new (window as any).bootstrap.Toast(toastElement)
+    toast.show()
+  }
 }
 
 onMounted(() => {
@@ -401,6 +600,20 @@ onMounted(() => {
   gap: 1px;
 }
 
+.rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.rating-star {
+  transition: all 0.2s ease;
+}
+
+.rating-star:hover {
+  transform: scale(1.1);
+}
+
 .bg-purple {
   background-color: #6f42c1 !important;
 }
@@ -416,5 +629,14 @@ onMounted(() => {
 .pagination .page-item.active .page-link {
   background-color: var(--bs-primary);
   border-color: var(--bs-primary);
+}
+
+.modal-content {
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.toast {
+  min-width: 300px;
 }
 </style>

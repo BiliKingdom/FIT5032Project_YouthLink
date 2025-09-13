@@ -14,9 +14,6 @@ import AppFooter from '@/components/AppFooter.vue'
 import { useAuthStore } from '@/stores/auth'
 import { onMounted } from 'vue'
 
-// Bootstrap JS imports
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'
-
 const authStore = useAuthStore()
 
 // Initialize auth when app mounts
