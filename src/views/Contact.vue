@@ -158,19 +158,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- ✅ DataTable Section -->
-            <div v-if="submissions.length" class="mt-5">
-              <h3 class="mb-3">Submitted Messages</h3>
-              <DataTable :value="submissions" stripedRows tableStyle="min-width: 50rem">
-                <Column field="name" header="Name" />
-                <Column field="email" header="Email" />
-                <Column field="phone" header="Phone" />
-                <Column field="subject" header="Subject" />
-                <Column field="message" header="Message" />
-                <Column field="timestamp" header="Submitted At" />
-              </DataTable>
-            </div>
           </div>
 
           <!-- Contact Information -->
@@ -190,8 +177,7 @@ import {
   Send, MapPin, Phone, Mail, Clock, 
   AlertTriangle, CheckCircle, AlertCircle 
 } from 'lucide-vue-next'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
+import { contactService } from '@/services/firestore'
 
 interface ContactForm {
   name: string
@@ -221,11 +207,6 @@ const form = ref<ContactForm>({
 const errors = ref<ValidationErrors>({})
 const loading = ref(false)
 const submitStatus = ref<SubmitStatus | null>(null)
-const submissions = ref<any[]>([])
-
-onMounted(() => {
-  submissions.value = JSON.parse(localStorage.getItem('contactSubmissions') || '[]')
-})
 
 const isFormValid = computed(() => {
   return form.value.name.length >= 2 &&
@@ -302,20 +283,29 @@ const submitForm = async () => {
   submitStatus.value = null
 
   try {
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    const newRecord = {
-      ...form.value,
-      timestamp: new Date().toLocaleString(),
-      id: Date.now()
+    const result = await contactService.create({
+      name: form.value.name,
+      email: form.value.email,
+      phone: form.value.phone,
+      subject: form.value.subject,
+      message: form.value.message
+    })
+    
+    if (result.success) {
+      submitStatus.value = {
+        type: 'alert-success',
+        message: 'Thank you for your message! We\'ll get back to you within 24 hours.'
+      }
+      resetForm()
+    } else {
+      submitStatus.value = {
+        type: 'alert-danger',
+        message: result.error || 'Failed to submit your message.'
+      }
     }
-    submissions.value.push(newRecord)
-    localStorage.setItem('contactSubmissions', JSON.stringify(submissions.value))
-    submitStatus.value = {
-      type: 'alert-success',
-      message: 'Thank you for your message! We\'ll get back to you within 24 hours.'
-    }
-    resetForm()
+    
   } catch (error) {
+    console.error('Contact form error:', error)
     submitStatus.value = {
       type: 'alert-danger',
       message: 'Sorry, there was an error sending your message. Please try again.'

@@ -156,6 +156,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Calendar, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+import { appointmentsService } from '@/services/firestore'
 
 interface BookingForm {
   serviceType: string
@@ -175,6 +177,7 @@ interface SubmitStatus {
   message: string
 }
 
+const authStore = useAuthStore()
 const form = ref<BookingForm>({
   serviceType: '',
   preferredDate: '',
@@ -262,28 +265,39 @@ const submitBooking = async () => {
   submitStatus.value = null
   
   try {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Mock successful booking
-    submitStatus.value = {
-      type: 'alert-success',
-      message: 'Your appointment request has been submitted successfully! We\'ll contact you within 24 hours to confirm your booking.'
+    if (!authStore.user) {
+      submitStatus.value = {
+        type: 'alert-danger',
+        message: 'You must be logged in to book an appointment.'
+      }
+      return
     }
     
-    // Store booking in localStorage
-    const bookings = JSON.parse(localStorage.getItem('appointments') || '[]')
-    bookings.push({
-      ...form.value,
-      timestamp: new Date().toISOString(),
-      id: Date.now(),
+    const result = await appointmentsService.create({
+      userId: authStore.user.id,
+      serviceType: form.value.serviceType,
+      preferredDate: form.value.preferredDate,
+      preferredTime: form.value.preferredTime,
+      urgency: form.value.urgency,
+      reason: form.value.reason,
       status: 'pending'
     })
-    localStorage.setItem('appointments', JSON.stringify(bookings))
     
-    resetForm()
+    if (result.success) {
+      submitStatus.value = {
+        type: 'alert-success',
+        message: 'Your appointment request has been submitted successfully! We\'ll contact you within 24 hours to confirm your booking.'
+      }
+      resetForm()
+    } else {
+      submitStatus.value = {
+        type: 'alert-danger',
+        message: result.error || 'Failed to submit appointment request.'
+      }
+    }
     
   } catch (error) {
+    console.error('Booking error:', error)
     submitStatus.value = {
       type: 'alert-danger',
       message: 'Sorry, there was an error submitting your booking. Please try again.'
