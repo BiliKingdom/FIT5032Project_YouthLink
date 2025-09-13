@@ -198,14 +198,8 @@ import {
   CheckCircle, AlertCircle 
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { appointmentsService, type Appointment } from '@/services/firestore'
 
-interface Appointment {
-  id: number
-  serviceType: string
-  preferredDate: string
-  preferredTime: string
-  status: 'pending' | 'confirmed' | 'cancelled'
-}
 
 interface UserSettings {
   emailNotifications: boolean
@@ -250,10 +244,14 @@ const getStatusBadgeClass = (status: string) => {
   return classes[status] || 'bg-secondary'
 }
 
-const loadAppointments = () => {
-  const savedAppointments = localStorage.getItem('appointments')
-  if (savedAppointments) {
-    appointments.value = JSON.parse(savedAppointments)
+const loadAppointments = async () => {
+  if (!authStore.user) return
+  
+  const result = await appointmentsService.getUserAppointments(authStore.user.id)
+  if (result.success) {
+    appointments.value = result.data || []
+  } else {
+    console.error('Failed to load appointments:', result.error)
   }
 }
 
@@ -269,12 +267,17 @@ const saveSettings = () => {
   showMessage('Settings saved successfully!', 'alert-success')
 }
 
-const cancelAppointment = (appointmentId: number) => {
-  const appointment = appointments.value.find(a => a.id === appointmentId)
-  if (appointment) {
-    appointment.status = 'cancelled'
-    localStorage.setItem('appointments', JSON.stringify(appointments.value))
+const cancelAppointment = async (appointmentId: string) => {
+  const result = await appointmentsService.updateStatus(appointmentId, 'cancelled')
+  if (result.success) {
+    // Update local state
+    const appointment = appointments.value.find(a => a.id === appointmentId)
+    if (appointment) {
+      appointment.status = 'cancelled'
+    }
     showMessage('Appointment cancelled successfully.', 'alert-success')
+  } else {
+    showMessage('Failed to cancel appointment.', 'alert-danger')
   }
 }
 

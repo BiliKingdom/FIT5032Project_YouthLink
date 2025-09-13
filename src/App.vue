@@ -9,11 +9,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { onMounted } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
-import AdminHeader from '@/components/AdminHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 
 // Bootstrap JS imports
@@ -21,9 +19,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const authStore = useAuthStore()
 
-onMounted(() => {
-  authStore.initializeAuth()
-})
+// Auth is already initialized in main.ts
 </script>
 
 <style>

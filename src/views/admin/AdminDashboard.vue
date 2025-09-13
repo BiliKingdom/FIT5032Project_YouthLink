@@ -208,6 +208,7 @@ import {
   Zap, Mail, Shield, Download, Plus 
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { appointmentsService, contactService, userService } from '@/services/firestore'
 
 const authStore = useAuthStore()
 
@@ -235,8 +236,8 @@ interface SystemStatusItem {
 }
 
 const stats = ref<Stats>({
-  totalUsers: 1247,
-  totalAppointments: 89,
+  totalUsers: 0,
+  totalAppointments: 0,
   totalResources: 156,
   newResources: 12,
   averageRating: 4.6
@@ -307,9 +308,27 @@ const systemStatus = ref<SystemStatusItem[]>([
   }
 ])
 
+const loadDashboardData = async () => {
+  try {
+    // Load users count
+    const usersResult = await userService.getAll()
+    if (usersResult.success) {
+      stats.value.totalUsers = usersResult.data?.length || 0
+    }
+    
+    // Load appointments count
+    const appointmentsResult = await appointmentsService.getAll()
+    if (appointmentsResult.success) {
+      stats.value.totalAppointments = appointmentsResult.data?.length || 0
+    }
+    
+  } catch (error) {
+    console.error('Error loading dashboard data:', error)
+  }
+}
+
 onMounted(() => {
-  // Load admin dashboard data
-  console.log('Admin dashboard loaded')
+  loadDashboardData()
 })
 </script>
 
