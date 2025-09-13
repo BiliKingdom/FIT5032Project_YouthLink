@@ -8,7 +8,6 @@ import InfoTopic from '@/views/InfoTopic.vue'
 import SupportMap from '@/views/SupportMap.vue'
 import BookAppointment from '@/views/BookAppointment.vue'
 import ResourcesList from '@/views/ResourcesList.vue'
-import EventsList from '@/views/EventsList.vue'
 import GetInvolved from '@/views/GetInvolved.vue'
 import About from '@/views/About.vue'
 import Contact from '@/views/Contact.vue'
@@ -50,11 +49,6 @@ const router = createRouter({
       path: '/resources/list',
       name: 'ResourcesList',
       component: ResourcesList
-    },
-    {
-      path: '/resources/events',
-      name: 'EventsList',
-      component: EventsList
     },
     {
       path: '/involved',

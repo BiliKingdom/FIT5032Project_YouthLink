@@ -51,7 +51,6 @@
             </a>
             <ul class="dropdown-menu">
               <li><router-link to="/resources/list" class="dropdown-item">Articles</router-link></li>
-              <li><router-link to="/resources/events" class="dropdown-item">Events</router-link></li>
             </ul>
           </li>
           <!-- <li class="nav-item">

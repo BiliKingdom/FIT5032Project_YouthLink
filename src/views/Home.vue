@@ -157,22 +157,6 @@
             </div>
           </div>
 
-          <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm">
-              <div class="card-body text-center p-4">
-                <div class="feature-icon bg-purple bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
-                  <Users class="text-purple" :size="32" />
-                </div>
-                <h5 class="card-title">Community Events</h5>
-                <p class="card-text text-muted">
-                  Join workshops, support groups, and community events focused on mental wellness.
-                </p>
-                <router-link to="/resources/events" class="btn btn-outline-primary">
-                  View Events
-                </router-link>
-              </div>
-            </div>
-          </div>
 
           <div class="col-md-6 col-lg-4">
             <div class="card h-100 border-0 shadow-sm">
