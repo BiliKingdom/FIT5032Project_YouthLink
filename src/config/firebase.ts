@@ -42,8 +42,22 @@ export const db = getFirestore(app);
 // Initialize Cloud Storage and get a reference to the service
 export const storage = getStorage(app);
 
-// Enable offline persistence for Firestore
+// Configure Firestore settings for better performance
 import { enableNetwork, disableNetwork } from "firebase/firestore";
+
+// Enable offline persistence and configure cache
+import { enableIndexedDbPersistence } from "firebase/firestore";
+
+// Only enable persistence in production, not during development
+if (import.meta.env.PROD) {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code == 'failed-precondition') {
+      console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+    } else if (err.code == 'unimplemented') {
+      console.warn('The current browser does not support all of the features required to enable persistence');
+    }
+  });
+}
 
 // Handle network connectivity
 export const enableFirestoreNetwork = () => enableNetwork(db);

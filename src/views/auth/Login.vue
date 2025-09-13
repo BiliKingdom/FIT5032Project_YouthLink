@@ -78,7 +78,7 @@
               >
                 <div v-if="authStore.loading" class="spinner-border spinner-border-sm me-2"></div>
                 <LogIn class="me-2" :size="18" />
-                {{ authStore.loading ? 'Signing In...' : 'Sign In' }}
+                {{ authStore.loading ? 'Signing In... (This may take a moment)' : 'Sign In' }}
               </button>
 
               <div class="text-center">
@@ -188,7 +188,6 @@ const handleLogin = async () => {
   const result = await authStore.login(form.value.email, form.value.password)
   
   if (result.success) {
-    // 根据用户角色重定向
     if (authStore.isAdmin) {
       router.push('/admin')
     } else {

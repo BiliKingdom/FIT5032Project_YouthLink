@@ -36,7 +36,17 @@ export const useAuthStore = defineStore('auth', () => {
   // Convert Firebase user to our User interface
   const createUserProfile = async (firebaseUser: FirebaseUser): Promise<User> => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+      // Add timeout for Firestore operations
+      const getUserDoc = async () => {
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+        return userDoc
+      }
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Firestore timeout')), 10000) // 10 second timeout
+      )
+      
+      const userDoc = await Promise.race([getUserDoc(), timeoutPromise]) as any
       
       if (userDoc.exists()) {
         const userData = userDoc.data()
@@ -59,12 +69,17 @@ export const useAuthStore = defineStore('auth', () => {
         }
         
         try {
-          await setDoc(doc(db, 'users', firebaseUser.uid), {
-            displayName: newUser.displayName,
-            email: newUser.email,
-            role: newUser.role,
-            createdAt: serverTimestamp()
-          })
+          // Add timeout for user creation
+          const createUserDoc = async () => {
+            await setDoc(doc(db, 'users', firebaseUser.uid), {
+              displayName: newUser.displayName,
+              email: newUser.email,
+              role: newUser.role,
+              createdAt: serverTimestamp()
+            })
+          }
+          
+          await Promise.race([createUserDoc(), timeoutPromise])
         } catch (createError) {
           console.warn('Failed to create user document in Firestore:', createError)
           // Continue with local user data even if Firestore write fails
@@ -73,7 +88,11 @@ export const useAuthStore = defineStore('auth', () => {
         return newUser
       }
     } catch (error: any) {
-      console.warn('Failed to fetch user document from Firestore:', error)
+      if (error.message === 'Firestore timeout') {
+        console.warn('Firestore operation timed out, using fallback user data')
+      } else {
+        console.warn('Failed to fetch user document from Firestore:', error)
+      }
       
       // Return a basic user profile based on Firebase Auth data when offline
       return {
@@ -89,13 +108,25 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (email: string, password: string) => {
     loading.value = true
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      // Set a timeout for the login operation
+      const loginPromise = signInWithEmailAndPassword(auth, email, password)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Login timeout')), 30000) // 30 second timeout
+      )
+      
+      const userCredential = await Promise.race([loginPromise, timeoutPromise]) as any
       const userProfile = await createUserProfile(userCredential.user)
       user.value = userProfile
       return { success: true }
     } catch (error: any) {
       console.error('Login error:', error)
       let errorMessage = 'Login failed. Please try again.'
+      
+      // Handle timeout errors
+      if (error.message === 'Login timeout') {
+        errorMessage = 'Login is taking too long. Please check your internet connection and try again.'
+        return { success: false, error: errorMessage }
+      }
       
       // Handle offline errors
       if (error.message && error.message.includes('client is offline')) {
@@ -121,6 +152,9 @@ export const useAuthStore = defineStore('auth', () => {
           break
         case 'auth/too-many-requests':
           errorMessage = 'Too many failed attempts. Please try again later.'
+          break
+        case 'auth/network-request-failed':
+          errorMessage = 'Network error. Please check your internet connection.'
           break
       }
       
