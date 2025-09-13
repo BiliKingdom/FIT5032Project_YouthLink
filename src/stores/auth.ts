@@ -35,36 +35,54 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Convert Firebase user to our User interface
   const createUserProfile = async (firebaseUser: FirebaseUser): Promise<User> => {
-    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
-    
-    if (userDoc.exists()) {
-      const userData = userDoc.data()
-      return {
-        id: firebaseUser.uid,
-        displayName: firebaseUser.displayName || userData.displayName || 'User',
-        email: firebaseUser.email || '',
-        role: userData.role || 'user',
-        createdAt: userData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-        photoURL: firebaseUser.photoURL || userData.photoURL
+    try {
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        return {
+          id: firebaseUser.uid,
+          displayName: firebaseUser.displayName || userData.displayName || 'User',
+          email: firebaseUser.email || '',
+          role: userData.role || 'user',
+          createdAt: userData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          photoURL: firebaseUser.photoURL || userData.photoURL
+        }
+      } else {
+        // Create new user document if it doesn't exist
+        const newUser: User = {
+          id: firebaseUser.uid,
+          displayName: firebaseUser.displayName || 'User',
+          email: firebaseUser.email || '',
+          role: 'user',
+          createdAt: new Date().toISOString()
+        }
+        
+        try {
+          await setDoc(doc(db, 'users', firebaseUser.uid), {
+            displayName: newUser.displayName,
+            email: newUser.email,
+            role: newUser.role,
+            createdAt: serverTimestamp()
+          })
+        } catch (createError) {
+          console.warn('Failed to create user document in Firestore:', createError)
+          // Continue with local user data even if Firestore write fails
+        }
+        
+        return newUser
       }
-    } else {
-      // Create new user document if it doesn't exist
-      const newUser: User = {
+    } catch (error: any) {
+      console.warn('Failed to fetch user document from Firestore:', error)
+      
+      // Return a basic user profile based on Firebase Auth data when offline
+      return {
         id: firebaseUser.uid,
         displayName: firebaseUser.displayName || 'User',
         email: firebaseUser.email || '',
         role: 'user',
         createdAt: new Date().toISOString()
       }
-      
-      await setDoc(doc(db, 'users', firebaseUser.uid), {
-        displayName: newUser.displayName,
-        email: newUser.email,
-        role: newUser.role,
-        createdAt: serverTimestamp()
-      })
-      
-      return newUser
     }
   }
 
@@ -78,6 +96,12 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error: any) {
       console.error('Login error:', error)
       let errorMessage = 'Login failed. Please try again.'
+      
+      // Handle offline errors
+      if (error.message && error.message.includes('client is offline')) {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.'
+        return { success: false, error: errorMessage }
+      }
       
       switch (error.code) {
         case 'auth/user-not-found':
