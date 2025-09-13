@@ -4,7 +4,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
-// Bootstrap JS import
+
 import * as bootstrap from 'bootstrap'
 
 import PrimeVue from 'primevue/config'
@@ -12,8 +12,9 @@ import Aura from '@primeuix/themes/aura'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 
-import 'primeicons/primeicons.css'   
-import 'primeflex/primeflex.css'     
+
+import 'primeicons/primeicons.css'  
+import 'primeflex/primeflex.css'    
 
 // Make Bootstrap available globally
 ;(window as any).bootstrap = bootstrap
