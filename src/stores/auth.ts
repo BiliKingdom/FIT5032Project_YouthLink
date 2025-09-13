@@ -86,6 +86,9 @@ export const useAuthStore = defineStore('auth', () => {
         case 'auth/wrong-password':
           errorMessage = 'Incorrect password.'
           break
+        case 'auth/invalid-credential':
+          errorMessage = 'Invalid email or password. Please check your credentials.'
+          break
         case 'auth/invalid-email':
           errorMessage = 'Invalid email address.'
           break
