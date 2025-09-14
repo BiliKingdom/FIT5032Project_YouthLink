@@ -81,21 +81,18 @@
                         v-for="i in 5"
                         :key="i"
                         :size="14"
-                        :class="i <= Math.round(resource.rating) ? 'text-warning' : 'text-muted'"
-                        :fill="i <= Math.round(resource.rating) ? 'currentColor' : 'none'"
+                        :class="i <= Math.round(resource.overallRating) ? 'text-warning' : 'text-muted'"
+                        :fill="i <= Math.round(resource.overallRating) ? 'currentColor' : 'none'"
                       />
                     </div>
-                    <small class="text-muted">({{ resource.rating.toFixed(1) }}/5 - {{ resource.ratingCount }} reviews)</small>
+                    <small class="text-muted">({{ resource.overallRating.toFixed(1) }}/5 - {{ resource.totalRatings }} reviews)</small>
                   </div>
                 </td>
                 <td>
                   <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" @click="viewResource(resource)">
+                    <router-link :to="`/resources/${resource.id}`" class="btn btn-outline-primary">
                       <Eye :size="14" />
-                    </button>
-                    <button class="btn btn-outline-warning" @click="rateResource(resource)">
-                      <Star :size="14" />
-                    </button>
+                    </router-link>
                     <button class="btn btn-outline-success" @click="downloadResource(resource)">
                       <Download :size="14" />
                     </button>
@@ -138,64 +135,6 @@
               </ul>
             </nav>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Rating Modal -->
-  <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="ratingModalLabel">Rate Resource</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div v-if="selectedResource" class="text-center">
-            <h6 class="mb-3">{{ selectedResource.title }}</h6>
-            <p class="text-muted mb-4">{{ selectedResource.description }}</p>
-            
-            <div class="rating-stars mb-4">
-              <Star
-                v-for="i in 5"
-                :key="i"
-                :size="32"
-                :class="i <= userRating ? 'text-warning' : 'text-muted'"
-                :fill="i <= userRating ? 'currentColor' : 'none'"
-                class="rating-star"
-                @click="setRating(i)"
-                @mouseover="hoverRating = i"
-                @mouseleave="hoverRating = 0"
-                style="cursor: pointer;"
-              />
-            </div>
-            
-            <div class="mb-3">
-              <label for="reviewComment" class="form-label">Add a comment (optional)</label>
-              <textarea
-                v-model="reviewComment"
-                id="reviewComment"
-                class="form-control"
-                rows="3"
-                placeholder="Share your thoughts about this resource..."
-                maxlength="500"
-              ></textarea>
-              <div class="form-text">{{ reviewComment.length }}/500 characters</div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button 
-            type="button" 
-            class="btn btn-primary" 
-            @click="submitRating"
-            :disabled="userRating === 0 || submittingRating"
-          >
-            <div v-if="submittingRating" class="spinner-border spinner-border-sm me-2" role="status"></div>
-            {{ submittingRating ? 'Submitting...' : 'Submit Rating' }}
-          </button>
         </div>
       </div>
     </div>
@@ -248,149 +187,11 @@ const sortField = ref('title')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const currentPage = ref(1)
 const itemsPerPage = 10
-const selectedResource = ref<Resource | null>(null)
-const userRating = ref(0)
-const hoverRating = ref(0)
-const reviewComment = ref('')
-const submittingRating = ref(false)
 const toastMessage = ref('')
 const toastType = ref<'success' | 'error'>('success')
-const authStore = useAuthStore()
 
-const resources = ref<Resource[]>([
-  {
-    id: 1,
-    title: 'Understanding Anxiety in Young People',
-    description: 'A comprehensive guide to recognizing and managing anxiety symptoms',
-    category: 'Anxiety',
-    type: 'Article',
-    rating: 4.5,
-    url: '#',
-    ratingCount: 24,
-    userRatings: {}
-  },
-  {
-    id: 2,
-    title: 'Coping with Depression: A Teen\'s Guide',
-    description: 'Practical strategies for managing depression and building resilience',
-    category: 'Depression',
-    type: 'Guide',
-    rating: 4.8,
-    url: '#',
-    ratingCount: 31,
-    userRatings: {}
-  },
-  {
-    id: 3,
-    title: 'Stress Management Techniques',
-    description: 'Evidence-based methods for reducing stress and improving wellbeing',
-    category: 'Stress',
-    type: 'Video',
-    rating: 4.2,
-    url: '#',
-    ratingCount: 18,
-    userRatings: {}
-  },
-  {
-    id: 4,
-    title: 'Building Healthy Relationships',
-    description: 'Tips for developing and maintaining positive relationships',
-    category: 'Relationships',
-    type: 'Article',
-    rating: 4.6,
-    url: '#',
-    ratingCount: 27,
-    userRatings: {}
-  },
-  {
-    id: 5,
-    title: 'Mindfulness for Mental Health',
-    description: 'Introduction to mindfulness practices for emotional regulation',
-    category: 'Wellness',
-    type: 'Audio',
-    rating: 4.4,
-    url: '#',
-    ratingCount: 15,
-    userRatings: {}
-  },
-  {
-    id: 6,
-    title: 'Sleep and Mental Health',
-    description: 'The connection between sleep quality and psychological wellbeing',
-    category: 'Wellness',
-    type: 'Article',
-    rating: 4.3,
-    url: '#',
-    ratingCount: 22,
-    userRatings: {}
-  },
-  {
-    id: 7,
-    title: 'Social Media and Self-Esteem',
-    description: 'Navigating social media while maintaining a positive self-image',
-    category: 'Self-Esteem',
-    type: 'Guide',
-    rating: 4.1,
-    url: '#',
-    ratingCount: 19,
-    userRatings: {}
-  },
-  {
-    id: 8,
-    title: 'Crisis Support Resources',
-    description: 'Emergency contacts and immediate support options',
-    category: 'Crisis',
-    type: 'Resource List',
-    rating: 4.9,
-    url: '#',
-    ratingCount: 45,
-    userRatings: {}
-  },
-  {
-    id: 9,
-    title: 'Nutrition and Mental Health',
-    description: 'How diet affects mood and cognitive function',
-    category: 'Wellness',
-    type: 'Article',
-    rating: 4.0,
-    url: '#',
-    ratingCount: 12,
-    userRatings: {}
-  },
-  {
-    id: 10,
-    title: 'Exercise for Mental Wellbeing',
-    description: 'The mental health benefits of physical activity',
-    category: 'Wellness',
-    type: 'Video',
-    rating: 4.7,
-    url: '#',
-    ratingCount: 33,
-    userRatings: {}
-  },
-  {
-    id: 11,
-    title: 'Dealing with Panic Attacks',
-    description: 'Immediate strategies for managing panic attacks',
-    category: 'Anxiety',
-    type: 'Guide',
-    rating: 4.5,
-    url: '#',
-    ratingCount: 28,
-    userRatings: {}
-  },
-  {
-    id: 12,
-    title: 'Supporting a Friend in Crisis',
-    description: 'How to help someone experiencing mental health difficulties',
-    category: 'Support',
-    type: 'Article',
-    rating: 4.6,
-    url: '#',
-    ratingCount: 21,
-    userRatings: {}
-  }
-])
+const authStore = useAuthStore()
+const resources = ref<any[]>([])
 
 const filteredResources = ref<Resource[]>([])
 
@@ -487,84 +288,8 @@ const getCategoryBadgeClass = (category: string) => {
   return classes[category] || 'bg-secondary'
 }
 
-const viewResource = (resource: Resource) => {
-  console.log('Viewing resource:', resource.title)
-  // Mock resource viewing
-}
-
 const downloadResource = (resource: Resource) => {
   console.log('Downloading resource:', resource.title)
-}
-
-const rateResource = (resource: Resource) => {
-  if (!authStore.isLoggedIn) {
-    showToast('Please log in to rate resources', 'error')
-    return
-  }
-  
-  selectedResource.value = resource
-  userRating.value = 0
-  reviewComment.value = ''
-  
-  // Check if user has already rated this resource
-  if (authStore.user && resource.userRatings[authStore.user.id]) {
-    const existingRating = resource.userRatings[authStore.user.id]
-    userRating.value = existingRating.rating
-    reviewComment.value = existingRating.comment
-  }
-  
-  // Show modal using Bootstrap's modal API
-  const modal = new (window as any).bootstrap.Modal(document.getElementById('ratingModal'))
-  modal.show()
-}
-
-const setRating = (rating: number) => {
-  userRating.value = rating
-}
-
-const submitRating = async () => {
-  if (!selectedResource.value || !authStore.user || userRating.value === 0) {
-    return
-  }
-  
-  submittingRating.value = true
-  
-  try {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const resource = selectedResource.value
-    const userId = authStore.user.id
-    const wasNewRating = !resource.userRatings[userId]
-    
-    // Store the user's rating
-    resource.userRatings[userId] = {
-      rating: userRating.value,
-      comment: reviewComment.value,
-      date: new Date().toISOString()
-    }
-    
-    // Recalculate average rating
-    const ratings = Object.values(resource.userRatings).map(r => r.rating)
-    resource.rating = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
-    resource.ratingCount = ratings.length
-    
-    // Hide modal
-    const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('ratingModal'))
-    modal.hide()
-    
-    // Show success message
-    showToast(
-      wasNewRating ? 'Thank you for rating this resource!' : 'Your rating has been updated!',
-      'success'
-    )
-    
-  } catch (error) {
-    console.error('Error submitting rating:', error)
-    showToast('Failed to submit rating. Please try again.', 'error')
-  } finally {
-    submittingRating.value = false
-  }
 }
 
 const showToast = (message: string, type: 'success' | 'error') => {
@@ -578,9 +303,26 @@ const showToast = (message: string, type: 'success' | 'error') => {
   }
 }
 
+const loadResources = async () => {
+  try {
+    const { resourcesService } = await import('@/services/firestore')
+    const result = await resourcesService.getAll()
+    
+    if (result.success) {
+      resources.value = result.data || []
+    } else {
+      console.error('Failed to load resources:', result.error)
+    }
+  } catch (error) {
+    console.error('Error loading resources:', error)
+  }
+}
+
 onMounted(() => {
-  filteredResources.value = [...resources.value]
-  sortResources()
+  loadResources().then(() => {
+    filteredResources.value = [...resources.value]
+    sortResources()
+  })
 })
 </script>
 

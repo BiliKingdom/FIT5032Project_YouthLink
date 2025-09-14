@@ -10,13 +10,28 @@
           <Download class="me-2" :size="16" />
           Export Data
         </button>
-        <button class="btn btn-primary">
+        <button 
+          class="btn btn-primary"
+          @click="handleInitializeDatabase"
+          :disabled="initializingDatabase || databaseInitialized"
+        >
+          <div v-if="initializingDatabase" class="spinner-border spinner-border-sm me-2"></div>
           <Plus class="me-2" :size="16" />
-          Add Content
+          {{ initializingDatabase ? 'Initializing...' : databaseInitialized ? 'Database Ready' : 'Initialize Database' }}
         </button>
       </div>
     </div>
 
+    <!-- Database Initialization Alert -->
+    <div v-if="!databaseInitialized && !initializingDatabase" class="alert alert-info mb-4">
+      <div class="d-flex align-items-center">
+        <AlertCircle class="me-2" :size="20" />
+        <div class="flex-grow-1">
+          <strong>Database Setup Required</strong>
+          <p class="mb-0">Click "Initialize Database" to set up sample data including mental health resources, service locations, and system settings.</p>
+        </div>
+      </div>
+    </div>
     <!-- Stats Cards -->
     <div class="row g-4 mb-5">
       <div class="col-md-3">
@@ -205,10 +220,11 @@
 import { ref, onMounted } from 'vue'
 import { 
   Users, Calendar, BookOpen, Star, TrendingUp, BarChart, Activity, 
-  Zap, Mail, Shield, Download, Plus 
+  Zap, Mail, Shield, Download, Plus, AlertCircle
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { appointmentsService, contactService, userService } from '@/services/firestore'
+import { initializeDatabase, checkDatabaseStatus } from '@/services/initializeDatabase'
 
 const authStore = useAuthStore()
 
@@ -308,6 +324,9 @@ const systemStatus = ref<SystemStatusItem[]>([
   }
 ])
 
+const initializingDatabase = ref(false)
+const databaseInitialized = ref(false)
+
 const loadDashboardData = async () => {
   try {
     // Load users count
@@ -327,7 +346,34 @@ const loadDashboardData = async () => {
   }
 }
 
+const handleInitializeDatabase = async () => {
+  initializingDatabase.value = true
+  try {
+    const result = await initializeDatabase()
+    if (result.success) {
+      databaseInitialized.value = true
+      // Reload dashboard data
+      await loadDashboardData()
+    }
+  } catch (error) {
+    console.error('Error initializing database:', error)
+  } finally {
+    initializingDatabase.value = false
+  }
+}
+
+const checkDatabase = async () => {
+  try {
+    const status = await checkDatabaseStatus()
+    if (!status.needsInitialization) {
+      databaseInitialized.value = true
+    }
+  } catch (error) {
+    console.error('Error checking database status:', error)
+  }
+}
 onMounted(() => {
+  checkDatabase()
   loadDashboardData()
 })
 </script>

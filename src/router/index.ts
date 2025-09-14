@@ -51,6 +51,16 @@ const router = createRouter({
       component: ResourcesList
     },
     {
+      path: '/resources/:id',
+      name: 'ResourceDetail',
+      component: () => import('@/views/ResourceDetail.vue')
+    },
+    {
+      path: '/resources/:id',
+      name: 'ResourceDetail',
+      component: () => import('@/views/ResourceDetail.vue')
+    },
+    {
       path: '/involved',
       name: 'GetInvolved',
       component: GetInvolved
