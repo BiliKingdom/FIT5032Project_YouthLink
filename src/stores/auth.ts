@@ -221,6 +221,11 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await signOut(auth)
       user.value = null
+      
+      // Redirect to home page after logout
+      if (typeof window !== 'undefined') {
+        window.location.href = '/'
+      }
     } catch (error) {
       console.error('Logout error:', error)
     }

@@ -156,7 +156,7 @@ const viewProfile = () => console.log('View admin profile')
 const viewPublicSite = () => router.push('/')
 const logout = () => {
   authStore.logout()
-  router.push('/')
+  // The auth store will handle the redirect
 }
 </script>
 

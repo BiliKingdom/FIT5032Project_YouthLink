@@ -86,7 +86,7 @@
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
-                <button @click="authStore.logout()" class="dropdown-item">
+                <button @click="handleLogout" class="dropdown-item">
                   <LogOut class="me-1" :size="16" />
                   Logout
                 </button>
@@ -102,8 +102,15 @@
 <script setup lang="ts">
 import { Heart, User, LogOut } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
+const router = useRouter()
+
+const handleLogout = async () => {
+  await authStore.logout()
+  router.push('/')
+}
 </script>
 
 <style scoped>
