@@ -645,9 +645,6 @@ onUnmounted(() => {
   box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 
-</script>
-
-<style>
 /* Global styles for Leaflet map */
 .leaflet-popup-content {
   margin: 8px 12px;
@@ -679,8 +676,7 @@ onUnmounted(() => {
   border-bottom: 1px solid #dee2e6;
   padding-bottom: 0.5rem;
 }
-</style>
-<style>
+
 /* Scrollbar styles for services list */
 .services-list {
   scrollbar-width: thin;
