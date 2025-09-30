@@ -407,10 +407,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { 
-  Star, User, Calendar, MessageSquare, Plus, ThumbsUp, Flag,
-  ArrowLeft, CheckCircle, AlertCircle, Eye, Target
-} from 'lucide-vue-next'
+import { Star, User, Calendar, MessageSquare, Plus, ThumbsUp, Flag, ArrowLeft, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Eye, Target } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { 
   resourcesService, 

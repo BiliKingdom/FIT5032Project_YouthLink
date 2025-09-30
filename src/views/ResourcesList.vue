@@ -164,10 +164,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { 
-  BookOpen, Search, ChevronUp, ChevronDown, Star, Eye, Download,
-  CheckCircle, AlertCircle
-} from 'lucide-vue-next'
+import { BookOpen, Search, ChevronUp, ChevronDown, Star, Eye, Download, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 
 interface Resource {

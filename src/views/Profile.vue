@@ -193,10 +193,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { 
-  User, Calendar, Settings, Edit, Shield, Trash2, X,
-  CheckCircle, AlertCircle 
-} from 'lucide-vue-next'
+import { User, Calendar, Settings, CreditCard as Edit, Shield, Trash2, X, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { appointmentsService, type Appointment } from '@/services/firestore'
 
