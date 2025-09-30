@@ -9,6 +9,7 @@ import SupportMap from '@/views/SupportMap.vue'
 import BookAppointment from '@/views/BookAppointment.vue'
 import CourseBooking from '@/views/CourseBooking.vue'
 import ResourcesList from '@/views/ResourcesList.vue'
+import ResourceDetail from '@/views/ResourceDetail.vue'
 import GetInvolved from '@/views/GetInvolved.vue'
 import About from '@/views/About.vue'
 import Contact from '@/views/Contact.vue'
@@ -16,6 +17,7 @@ import Login from '@/views/auth/Login.vue'
 import Register from '@/views/auth/Register.vue'
 import Profile from '@/views/Profile.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
+import CourseManagement from '@/views/admin/CourseManagement.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -41,12 +43,6 @@ const router = createRouter({
       component: SupportMap
     },
     {
-      path: '/support/book',
-      name: 'BookAppointment',
-      component: BookAppointment,
-      meta: { requiresAuth: true }
-    },
-    {
       path: '/courses/book',
       name: 'CourseBooking',
       component: CourseBooking,
@@ -60,12 +56,7 @@ const router = createRouter({
     {
       path: '/resources/:id',
       name: 'ResourceDetail',
-      component: () => import('@/views/ResourceDetail.vue')
-    },
-    {
-      path: '/resources/:id',
-      name: 'ResourceDetail',
-      component: () => import('@/views/ResourceDetail.vue')
+      component: ResourceDetail
     },
     {
       path: '/involved',
@@ -104,6 +95,12 @@ const router = createRouter({
       path: '/admin',
       name: 'AdminDashboard',
       component: AdminDashboard,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/courses',
+      name: 'CourseManagement',
+      component: CourseManagement,
       meta: { requiresAdmin: true }
     }
   ]

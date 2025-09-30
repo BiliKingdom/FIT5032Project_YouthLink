@@ -25,6 +25,7 @@ export interface Course {
   category: string
   price: number
   isActive: boolean
+  courseType: 'one-time' | 'weekly' | 'monthly'
   createdAt: Timestamp | Date
   updatedAt: Timestamp | Date
 }
@@ -50,6 +51,27 @@ export interface CourseSchedule {
   id?: string
   courseId: string
   dayOfWeek: number // 0 = Sunday, 1 = Monday, etc.
+  startTime: string // HH:MM format
+  endTime: string // HH:MM format
+  isActive: boolean
+  createdAt: Timestamp | Date
+}
+
+// Course exception interface (for cancelled sessions)
+export interface CourseException {
+  id?: string
+  courseId: string
+  exceptionDate: string // YYYY-MM-DD format
+  reason?: string
+  createdAt: Timestamp | Date
+  createdBy: string // admin user ID
+}
+
+// One-time course session interface
+export interface OneTimeCourseSession {
+  id?: string
+  courseId: string
+  sessionDate: Timestamp | Date
   startTime: string // HH:MM format
   endTime: string // HH:MM format
   isActive: boolean
@@ -114,6 +136,34 @@ export const coursesService = {
     } catch (error) {
       console.error('Error creating course:', error)
       return { success: false, error: 'Failed to create course' }
+    }
+  },
+
+  // Update course (admin only)
+  async update(courseId: string, courseData: Partial<Course>) {
+    try {
+      await updateDoc(doc(db, 'courses', courseId), {
+        ...courseData,
+        updatedAt: serverTimestamp()
+      })
+      return { success: true }
+    } catch (error) {
+      console.error('Error updating course:', error)
+      return { success: false, error: 'Failed to update course' }
+    }
+  },
+
+  // Delete course (admin only)
+  async delete(courseId: string) {
+    try {
+      await updateDoc(doc(db, 'courses', courseId), {
+        isActive: false,
+        updatedAt: serverTimestamp()
+      })
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting course:', error)
+      return { success: false, error: 'Failed to delete course' }
     }
   }
 }
@@ -342,6 +392,152 @@ export const courseSchedulesService = {
     } catch (error) {
       console.error('Error creating schedule:', error)
       return { success: false, error: 'Failed to create schedule' }
+    }
+  },
+
+  // Update schedule
+  async update(scheduleId: string, scheduleData: Partial<CourseSchedule>) {
+    try {
+      await updateDoc(doc(db, 'course_schedules', scheduleId), scheduleData)
+      return { success: true }
+    } catch (error) {
+      console.error('Error updating schedule:', error)
+      return { success: false, error: 'Failed to update schedule' }
+    }
+  },
+
+  // Delete schedule
+  async delete(scheduleId: string) {
+    try {
+      await updateDoc(doc(db, 'course_schedules', scheduleId), {
+        isActive: false
+      })
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting schedule:', error)
+      return { success: false, error: 'Failed to delete schedule' }
+    }
+  }
+}
+
+// Course exceptions service (for cancelled sessions)
+export const courseExceptionsService = {
+  // Get exceptions for a course
+  async getByCourseId(courseId: string) {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'course_exceptions'))
+      const exceptions: CourseException[] = []
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data() as CourseException
+        if (data.courseId === courseId) {
+          exceptions.push({
+            id: doc.id,
+            ...data
+          } as CourseException)
+        }
+      })
+      
+      return { success: true, data: exceptions }
+    } catch (error) {
+      console.error('Error fetching course exceptions:', error)
+      return { success: false, error: 'Failed to fetch exceptions' }
+    }
+  },
+
+  // Create exception (admin only)
+  async create(exceptionData: Omit<CourseException, 'id' | 'createdAt'>) {
+    try {
+      const docRef = await addDoc(collection(db, 'course_exceptions'), {
+        ...exceptionData,
+        createdAt: serverTimestamp()
+      })
+      return { success: true, id: docRef.id }
+    } catch (error) {
+      console.error('Error creating exception:', error)
+      return { success: false, error: 'Failed to create exception' }
+    }
+  },
+
+  // Delete exception (admin only)
+  async delete(exceptionId: string) {
+    try {
+      await deleteDoc(doc(db, 'course_exceptions', exceptionId))
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting exception:', error)
+      return { success: false, error: 'Failed to delete exception' }
+    }
+  }
+}
+
+// One-time course sessions service
+export const oneTimeSessionsService = {
+  // Get sessions for a course
+  async getByCourseId(courseId: string) {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'one_time_sessions'))
+      const sessions: OneTimeCourseSession[] = []
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data() as OneTimeCourseSession
+        if (data.courseId === courseId && data.isActive) {
+          sessions.push({
+            id: doc.id,
+            ...data
+          } as OneTimeCourseSession)
+        }
+      })
+      
+      // Sort by session date
+      sessions.sort((a, b) => {
+        const dateA = a.sessionDate instanceof Timestamp ? a.sessionDate.toDate() : new Date(a.sessionDate)
+        const dateB = b.sessionDate instanceof Timestamp ? b.sessionDate.toDate() : new Date(b.sessionDate)
+        return dateA.getTime() - dateB.getTime()
+      })
+      
+      return { success: true, data: sessions }
+    } catch (error) {
+      console.error('Error fetching one-time sessions:', error)
+      return { success: false, error: 'Failed to fetch sessions' }
+    }
+  },
+
+  // Create session (admin only)
+  async create(sessionData: Omit<OneTimeCourseSession, 'id' | 'createdAt'>) {
+    try {
+      const docRef = await addDoc(collection(db, 'one_time_sessions'), {
+        ...sessionData,
+        createdAt: serverTimestamp()
+      })
+      return { success: true, id: docRef.id }
+    } catch (error) {
+      console.error('Error creating session:', error)
+      return { success: false, error: 'Failed to create session' }
+    }
+  },
+
+  // Update session (admin only)
+  async update(sessionId: string, sessionData: Partial<OneTimeCourseSession>) {
+    try {
+      await updateDoc(doc(db, 'one_time_sessions', sessionId), sessionData)
+      return { success: true }
+    } catch (error) {
+      console.error('Error updating session:', error)
+      return { success: false, error: 'Failed to update session' }
+    }
+  },
+
+  // Delete session (admin only)
+  async delete(sessionId: string) {
+    try {
+      await updateDoc(doc(db, 'one_time_sessions', sessionId), {
+        isActive: false
+      })
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting session:', error)
+      return { success: false, error: 'Failed to delete session' }
     }
   }
 }

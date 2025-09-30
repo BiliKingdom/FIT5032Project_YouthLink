@@ -128,31 +128,11 @@
                 </div>
                 <h5 class="card-title">Book Appointments</h5>
                 <p class="card-text text-muted">
-                  Schedule consultations with mental health professionals through our easy booking system.
-                </p>
-                <router-link 
-                  :to="authStore.isLoggedIn ? '/support/book' : '/auth/login'" 
-                  class="btn btn-outline-warning"
-                >
-                  Book Now
-                </router-link>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm">
-              <div class="card-body text-center p-4">
-                <div class="feature-icon bg-purple bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
-                  <Calendar class="text-purple" :size="32" />
-                </div>
-                <h5 class="card-title">Course Booking</h5>
-                <p class="card-text text-muted">
                   Join our mental health courses and workshops using our interactive calendar booking system.
                 </p>
                 <router-link 
                   :to="authStore.isLoggedIn ? '/courses/book' : '/auth/login'" 
-                  class="btn btn-outline-purple"
+                  class="btn btn-outline-warning"
                 >
                   Book Courses
                 </router-link>

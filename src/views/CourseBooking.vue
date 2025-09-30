@@ -50,6 +50,11 @@
                         Max {{ course.maxParticipants }}
                       </small>
                     </div>
+                    <div class="mt-2">
+                      <span class="badge" :class="getCourseTypeBadge(course.courseType)">
+                        {{ getCourseTypeLabel(course.courseType) }}
+                      </span>
+                    </div>
                   </div>
                   <span class="badge bg-success">Free</span>
                 </div>
@@ -87,6 +92,10 @@
                 <Tag class="text-primary me-2" :size="16" />
                 <strong>Category:</strong> {{ selectedCourse.category }}
               </div>
+              <div class="info-item mb-2">
+                <Repeat class="text-primary me-2" :size="16" />
+                <strong>Type:</strong> {{ getCourseTypeLabel(selectedCourse.courseType) }}
+              </div>
             </div>
 
             <!-- Course Schedule -->
@@ -98,6 +107,22 @@
                     <Calendar class="me-1" :size="12" />
                     {{ getDayName(schedule.dayOfWeek) }}s: {{ formatTime(schedule.startTime) }} - {{ formatTime(schedule.endTime) }}
                   </small>
+                </div>
+              </div>
+            </div>
+
+            <!-- One-time Sessions -->
+            <div v-if="oneTimeSessions.length > 0" class="mt-3">
+              <h6 class="fw-bold mb-2">Scheduled Sessions:</h6>
+              <div class="session-list">
+                <div v-for="session in oneTimeSessions.slice(0, 3)" :key="session.id" class="session-item mb-1">
+                  <small class="text-muted">
+                    <Calendar class="me-1" :size="12" />
+                    {{ formatSessionDate(session.sessionDate) }}: {{ formatTime(session.startTime) }} - {{ formatTime(session.endTime) }}
+                  </small>
+                </div>
+                <div v-if="oneTimeSessions.length > 3" class="text-muted small">
+                  +{{ oneTimeSessions.length - 3 }} more sessions
                 </div>
               </div>
             </div>
@@ -113,6 +138,7 @@
               <h5 class="mb-0">
                 <Calendar class="me-2" :size="20" />
                 Booking Calendar
+                <small class="ms-2 opacity-75">(Next 2 weeks available)</small>
               </h5>
               <div class="d-flex gap-2">
                 <button 
@@ -289,15 +315,19 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { BookOpen, User, Clock, Users, Info, Calendar, Tag, ChevronLeft, ChevronRight, X, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-vue-next'
+import { BookOpen, User, Clock, Users, Info, Calendar, Tag, Repeat, ChevronLeft, ChevronRight, X, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { 
   coursesService, 
   courseBookingsService, 
   courseSchedulesService,
+  courseExceptionsService,
+  oneTimeSessionsService,
   type Course, 
   type CourseBooking, 
-  type CourseSchedule 
+  type CourseSchedule,
+  type CourseException,
+  type OneTimeCourseSession
 } from '@/services/coursesService'
 
 // FullCalendar imports
@@ -322,6 +352,8 @@ const bookingNotes = ref('')
 const courses = ref<Course[]>([])
 const selectedCourse = ref<Course | null>(null)
 const courseSchedules = ref<CourseSchedule[]>([])
+const courseExceptions = ref<CourseException[]>([])
+const oneTimeSessions = ref<OneTimeCourseSession[]>([])
 const userBookings = ref<CourseBooking[]>([])
 const allBookings = ref<CourseBooking[]>([])
 const selectedTimeSlot = ref<{ start: Date; end: Date } | null>(null)
@@ -331,6 +363,9 @@ const initializeCalendar = async () => {
   await nextTick()
   
   if (!calendarEl.value) return
+
+  const today = new Date()
+  const twoWeeksLater = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
 
   calendarApi.value = new FullCalendar(calendarEl.value, {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
@@ -356,7 +391,11 @@ const initializeCalendar = async () => {
     eventColor: '#0066CC',
     selectConstraint: 'businessHours',
     selectOverlap: false,
-    eventOverlap: false
+    eventOverlap: false,
+    validRange: {
+      start: today,
+      end: twoWeeksLater
+    }
   })
 
   calendarApi.value.render()
@@ -385,11 +424,27 @@ const loadCourses = async () => {
 const selectCourse = async (course: Course) => {
   selectedCourse.value = course
   
-  // Load course schedules
   if (course.id) {
-    const result = await courseSchedulesService.getByCourseId(course.id)
-    if (result.success) {
-      courseSchedules.value = result.data || []
+    // Load course schedules for weekly/monthly courses
+    if (course.courseType === 'weekly' || course.courseType === 'monthly') {
+      const schedulesResult = await courseSchedulesService.getByCourseId(course.id)
+      if (schedulesResult.success) {
+        courseSchedules.value = schedulesResult.data || []
+      }
+
+      // Load course exceptions
+      const exceptionsResult = await courseExceptionsService.getByCourseId(course.id)
+      if (exceptionsResult.success) {
+        courseExceptions.value = exceptionsResult.data || []
+      }
+    }
+
+    // Load one-time sessions for one-time courses
+    if (course.courseType === 'one-time') {
+      const sessionsResult = await oneTimeSessionsService.getByCourseId(course.id)
+      if (sessionsResult.success) {
+        oneTimeSessions.value = sessionsResult.data || []
+      }
     }
   }
   
@@ -425,7 +480,7 @@ const loadCalendarEvents = async () => {
         }
       }))
       
-      // Generate available time slots based on course schedule
+      // Generate available time slots
       const availableSlots = generateAvailableSlots()
       
       // Add available slots as selectable events
@@ -452,33 +507,64 @@ const loadCalendarEvents = async () => {
   }
 }
 
-// Generate available time slots for the next 4 weeks
+// Generate available time slots for the next 2 weeks
 const generateAvailableSlots = () => {
-  if (!selectedCourse.value || courseSchedules.value.length === 0) return []
+  if (!selectedCourse.value) return []
   
   const slots = []
   const today = new Date()
-  const endDate = new Date(today.getTime() + 28 * 24 * 60 * 60 * 1000) // 4 weeks from now
+  const endDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000) // 2 weeks from now
   
-  for (let date = new Date(today); date <= endDate; date.setDate(date.getDate() + 1)) {
-    const dayOfWeek = date.getDay()
-    
-    // Find schedules for this day
-    const daySchedules = courseSchedules.value.filter(schedule => schedule.dayOfWeek === dayOfWeek)
-    
-    for (const schedule of daySchedules) {
-      const [startHour, startMinute] = schedule.startTime.split(':').map(Number)
-      const [endHour, endMinute] = schedule.endTime.split(':').map(Number)
+  if (selectedCourse.value.courseType === 'weekly') {
+    // Generate weekly recurring slots
+    for (let date = new Date(today); date <= endDate; date.setDate(date.getDate() + 1)) {
+      const dayOfWeek = date.getDay()
       
-      const slotStart = new Date(date)
-      slotStart.setHours(startHour, startMinute, 0, 0)
+      // Find schedules for this day
+      const daySchedules = courseSchedules.value.filter(schedule => schedule.dayOfWeek === dayOfWeek)
       
-      const slotEnd = new Date(date)
-      slotEnd.setHours(endHour, endMinute, 0, 0)
+      for (const schedule of daySchedules) {
+        const dateStr = date.toISOString().split('T')[0]
+        
+        // Check if this date is in exceptions
+        const isException = courseExceptions.value.some(exception => 
+          exception.exceptionDate === dateStr
+        )
+        
+        if (!isException) {
+          const [startHour, startMinute] = schedule.startTime.split(':').map(Number)
+          const [endHour, endMinute] = schedule.endTime.split(':').map(Number)
+          
+          const slotStart = new Date(date)
+          slotStart.setHours(startHour, startMinute, 0, 0)
+          
+          const slotEnd = new Date(date)
+          slotEnd.setHours(endHour, endMinute, 0, 0)
+          
+          // Only add future slots
+          if (slotStart > today) {
+            slots.push({ start: new Date(slotStart), end: new Date(slotEnd) })
+          }
+        }
+      }
+    }
+  } else if (selectedCourse.value.courseType === 'one-time') {
+    // Add one-time sessions
+    for (const session of oneTimeSessions.value) {
+      const sessionDate = session.sessionDate instanceof Date ? session.sessionDate : session.sessionDate.toDate()
       
-      // Only add future slots
-      if (slotStart > today) {
-        slots.push({ start: new Date(slotStart), end: new Date(slotEnd) })
+      // Only add sessions within the next 2 weeks
+      if (sessionDate >= today && sessionDate <= endDate) {
+        const [startHour, startMinute] = session.startTime.split(':').map(Number)
+        const [endHour, endMinute] = session.endTime.split(':').map(Number)
+        
+        const slotStart = new Date(sessionDate)
+        slotStart.setHours(startHour, startMinute, 0, 0)
+        
+        const slotEnd = new Date(sessionDate)
+        slotEnd.setHours(endHour, endMinute, 0, 0)
+        
+        slots.push({ start: slotStart, end: slotEnd })
       }
     }
   }
@@ -530,21 +616,7 @@ const handleDateSelect = (selectInfo: any) => {
   const end = selectInfo.end
   
   // Check if this is a valid time slot
-  const isValidSlot = courseSchedules.value.some(schedule => {
-    const dayOfWeek = start.getDay()
-    if (schedule.dayOfWeek !== dayOfWeek) return false
-    
-    const [scheduleStartHour, scheduleStartMinute] = schedule.startTime.split(':').map(Number)
-    const [scheduleEndHour, scheduleEndMinute] = schedule.endTime.split(':').map(Number)
-    
-    const scheduleStart = new Date(start)
-    scheduleStart.setHours(scheduleStartHour, scheduleStartMinute, 0, 0)
-    
-    const scheduleEnd = new Date(start)
-    scheduleEnd.setHours(scheduleEndHour, scheduleEndMinute, 0, 0)
-    
-    return start.getTime() === scheduleStart.getTime() && end.getTime() === scheduleEnd.getTime()
-  })
+  const isValidSlot = isValidTimeSlot(start, end)
   
   if (!isValidSlot) {
     showToast('Please select a valid time slot for this course', 'error')
@@ -565,6 +637,45 @@ const handleDateSelect = (selectInfo: any) => {
   modal.show()
   
   calendarApi.value?.unselect()
+}
+
+// Check if time slot is valid for the selected course
+const isValidTimeSlot = (start: Date, end: Date) => {
+  if (!selectedCourse.value) return false
+  
+  if (selectedCourse.value.courseType === 'weekly') {
+    return courseSchedules.value.some(schedule => {
+      const dayOfWeek = start.getDay()
+      if (schedule.dayOfWeek !== dayOfWeek) return false
+      
+      const [scheduleStartHour, scheduleStartMinute] = schedule.startTime.split(':').map(Number)
+      const [scheduleEndHour, scheduleEndMinute] = schedule.endTime.split(':').map(Number)
+      
+      const scheduleStart = new Date(start)
+      scheduleStart.setHours(scheduleStartHour, scheduleStartMinute, 0, 0)
+      
+      const scheduleEnd = new Date(start)
+      scheduleEnd.setHours(scheduleEndHour, scheduleEndMinute, 0, 0)
+      
+      return start.getTime() === scheduleStart.getTime() && end.getTime() === scheduleEnd.getTime()
+    })
+  } else if (selectedCourse.value.courseType === 'one-time') {
+    return oneTimeSessions.value.some(session => {
+      const sessionDate = session.sessionDate instanceof Date ? session.sessionDate : session.sessionDate.toDate()
+      const [startHour, startMinute] = session.startTime.split(':').map(Number)
+      const [endHour, endMinute] = session.endTime.split(':').map(Number)
+      
+      const sessionStart = new Date(sessionDate)
+      sessionStart.setHours(startHour, startMinute, 0, 0)
+      
+      const sessionEnd = new Date(sessionDate)
+      sessionEnd.setHours(endHour, endMinute, 0, 0)
+      
+      return start.getTime() === sessionStart.getTime() && end.getTime() === sessionEnd.getTime()
+    })
+  }
+  
+  return false
 }
 
 // Handle event click
@@ -664,6 +775,14 @@ const formatTime = (timeString: string) => {
   return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
 }
 
+const formatSessionDate = (dateTime: any) => {
+  const date = dateTime instanceof Date ? dateTime : dateTime.toDate()
+  return date.toLocaleDateString('en-AU', { 
+    month: 'short', 
+    day: 'numeric' 
+  })
+}
+
 const formatBookingDate = (dateTime: any) => {
   const date = dateTime instanceof Date ? dateTime : dateTime.toDate()
   return date.toLocaleDateString('en-AU', { 
@@ -690,6 +809,24 @@ const formatModalDate = (date: Date) => {
 
 const formatModalTime = (date: Date) => {
   return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
+}
+
+const getCourseTypeBadge = (courseType: string) => {
+  const badges: { [key: string]: string } = {
+    'weekly': 'bg-primary',
+    'monthly': 'bg-info',
+    'one-time': 'bg-warning'
+  }
+  return badges[courseType] || 'bg-secondary'
+}
+
+const getCourseTypeLabel = (courseType: string) => {
+  const labels: { [key: string]: string } = {
+    'weekly': 'Weekly',
+    'monthly': 'Monthly',
+    'one-time': 'One-time'
+  }
+  return labels[courseType] || courseType
 }
 
 const getStatusBadgeClass = (status: string) => {
@@ -752,7 +889,7 @@ onUnmounted(() => {
   align-items: center;
 }
 
-.schedule-item {
+.schedule-item, .session-item {
   padding: 0.25rem 0;
 }
 

@@ -52,12 +52,12 @@
           </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              <Calendar class="me-1" :size="16" />
-              Appointments
+              <BookOpen class="me-1" :size="16" />
+              Courses
             </a>
             <ul class="dropdown-menu dropdown-menu-dark">
-              <li><a class="dropdown-item" href="#" @click="navigateToAppointments">All Appointments</a></li>
-              <li><a class="dropdown-item" href="#" @click="navigateToPendingAppointments">Pending</a></li>
+              <li><router-link to="/admin/courses" class="dropdown-item">Manage Courses</router-link></li>
+              <li><a class="dropdown-item" href="#" @click="navigateToBookings">All Bookings</a></li>
               <li><a class="dropdown-item" href="#" @click="navigateToSchedule">Schedule</a></li>
             </ul>
           </li>
