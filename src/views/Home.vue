@@ -238,10 +238,7 @@
 </template>
 
 <script setup lang="ts">
-import { 
-  Heart, MapPin, BookOpen, Users, Calendar, Brain, 
-  Phone, MessageCircle, AlertTriangle 
-} from 'lucide-vue-next'
+import { Heart, MapPin, BookOpen, Users, Calendar, Brain, Phone, MessageCircle, TriangleAlert as AlertTriangle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()

@@ -289,10 +289,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { 
-  BookOpen, User, Clock, Users, Info, Calendar, Tag, 
-  ChevronLeft, ChevronRight, X, CheckCircle, AlertCircle 
-} from 'lucide-vue-next'
+import { BookOpen, User, Clock, Users, Info, Calendar, Tag, ChevronLeft, ChevronRight, X, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { 
   coursesService, 
