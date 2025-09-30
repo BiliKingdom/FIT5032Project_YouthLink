@@ -14,6 +14,7 @@ import {
   Timestamp 
 } from 'firebase/firestore'
 import { db } from '@/config/firebase'
+import type { ServiceLocation } from './locationService'
 
 // Appointment interface
 export interface Appointment {
@@ -485,6 +486,103 @@ export const resourcesService = {
     } catch (error) {
       console.error('Error fetching resource:', error)
       return { success: false, error: 'Failed to fetch resource' }
+    }
+  }
+}
+
+// Service locations service
+export const serviceLocationsService = {
+  // Create new service location
+  async create(locationData: Omit<ServiceLocation, 'id' | 'distance'>) {
+    try {
+      const docRef = await addDoc(collection(db, 'service_locations'), {
+        ...locationData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
+      return { success: true, id: docRef.id }
+    } catch (error) {
+      console.error('Error creating service location:', error)
+      return { success: false, error: 'Failed to create service location' }
+    }
+  },
+
+  // Get all service locations
+  async getAll() {
+    try {
+      const q = query(
+        collection(db, 'service_locations'),
+        where('isActive', '==', true),
+        orderBy('name', 'asc')
+      )
+      const querySnapshot = await getDocs(q)
+      const locations: ServiceLocation[] = []
+      
+      querySnapshot.forEach((doc) => {
+        locations.push({
+          id: doc.id,
+          ...doc.data()
+        } as ServiceLocation)
+      })
+      
+      return { success: true, data: locations }
+    } catch (error) {
+      console.error('Error fetching service locations:', error)
+      return { success: false, error: 'Failed to fetch service locations' }
+    }
+  },
+
+  // Get service locations by type
+  async getByType(type: string) {
+    try {
+      const q = query(
+        collection(db, 'service_locations'),
+        where('type', '==', type),
+        where('isActive', '==', true),
+        orderBy('name', 'asc')
+      )
+      const querySnapshot = await getDocs(q)
+      const locations: ServiceLocation[] = []
+      
+      querySnapshot.forEach((doc) => {
+        locations.push({
+          id: doc.id,
+          ...doc.data()
+        } as ServiceLocation)
+      })
+      
+      return { success: true, data: locations }
+    } catch (error) {
+      console.error('Error fetching service locations by type:', error)
+      return { success: false, error: 'Failed to fetch service locations' }
+    }
+  },
+
+  // Update service location
+  async update(locationId: string, locationData: Partial<ServiceLocation>) {
+    try {
+      await updateDoc(doc(db, 'service_locations', locationId), {
+        ...locationData,
+        updatedAt: serverTimestamp()
+      })
+      return { success: true }
+    } catch (error) {
+      console.error('Error updating service location:', error)
+      return { success: false, error: 'Failed to update service location' }
+    }
+  },
+
+  // Delete service location (soft delete)
+  async delete(locationId: string) {
+    try {
+      await updateDoc(doc(db, 'service_locations', locationId), {
+        isActive: false,
+        updatedAt: serverTimestamp()
+      })
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting service location:', error)
+      return { success: false, error: 'Failed to delete service location' }
     }
   }
 }

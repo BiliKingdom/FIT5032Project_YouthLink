@@ -1,5 +1,6 @@
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/firebase'
+import { melbourneServiceLocations } from './locationService'
 
 // Sample data for initializing the database
 export const initializeDatabase = async () => {
@@ -101,67 +102,15 @@ Remember, seeking help is a sign of courage; you don't have to face anxiety alon
       await setDoc(docRef, resource)
     }
 
-    // Initialize service locations for the map
-    const serviceLocationsData = [
-      {
-        id: 'headspace-melbourne',
-        name: 'Headspace Melbourne',
-        type: 'Youth Mental Health Service',
-        address: '456 Bourke Street, Melbourne VIC 3000',
-        phone: '(03) 9234 5678',
-        email: 'melbourne@headspace.org.au',
-        website: 'https://headspace.org.au',
-        coordinates: {
-          lat: -37.8136,
-          lng: 144.9631
-        },
-        services: ['Individual Counselling', 'Group Therapy', 'Crisis Support'],
-        ageRange: '12-25 years',
-        bulkBilling: true,
-        openingHours: {
-          monday: '9:00 AM - 5:00 PM',
-          tuesday: '9:00 AM - 5:00 PM',
-          wednesday: '9:00 AM - 5:00 PM',
-          thursday: '9:00 AM - 5:00 PM',
-          friday: '9:00 AM - 5:00 PM',
-          saturday: 'Closed',
-          sunday: 'Closed'
-        },
-        isActive: true,
-        createdAt: serverTimestamp()
-      },
-      {
-        id: 'beyond-blue-support',
-        name: 'Beyond Blue Support Centre',
-        type: 'Mental Health Support',
-        address: '789 Collins Street, Melbourne VIC 3000',
-        phone: '(03) 9345 6789',
-        email: 'support@beyondblue.org.au',
-        website: 'https://beyondblue.org.au',
-        coordinates: {
-          lat: -37.8174,
-          lng: 144.9648
-        },
-        services: ['Support Groups', 'Counselling', 'Information Sessions'],
-        ageRange: 'All ages',
-        bulkBilling: false,
-        openingHours: {
-          monday: '8:00 AM - 6:00 PM',
-          tuesday: '8:00 AM - 6:00 PM',
-          wednesday: '8:00 AM - 6:00 PM',
-          thursday: '8:00 AM - 6:00 PM',
-          friday: '8:00 AM - 6:00 PM',
-          saturday: '9:00 AM - 1:00 PM',
-          sunday: 'Closed'
-        },
-        isActive: true,
-        createdAt: serverTimestamp()
-      }
-    ]
 
     // Create service locations collection
-    for (const location of serviceLocationsData) {
-      await setDoc(doc(db, 'service_locations', location.id), location)
+    for (const location of melbourneServiceLocations) {
+      const docRef = doc(collection(db, 'service_locations'))
+      await setDoc(docRef, {
+        ...location,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
     }
 
     // Initialize system settings
