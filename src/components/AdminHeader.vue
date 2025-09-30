@@ -122,10 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { 
-  Shield, BarChart, Users, BookOpen, Calendar, TrendingUp, 
-  Settings, Zap, User, LogOut 
-} from 'lucide-vue-next'
+import { Shield, ChartBar as BarChart, Users, BookOpen, Calendar, TrendingUp, Settings, Zap, User, LogOut } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 

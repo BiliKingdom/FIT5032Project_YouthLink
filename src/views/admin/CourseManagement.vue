@@ -330,7 +330,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus, MoreVertical, User, Clock, Users, Tag, Calendar, Ban, Trash2 } from 'lucide-vue-next'
+import { Plus, MoveVertical as MoreVertical, User, Clock, Users, Tag, Calendar, Ban, Trash2 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { 
   coursesService, 
