@@ -265,8 +265,8 @@ export const resourceCommentsService = {
       
       // Sort by createdAt descending on client side
       comments.sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt)
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt)
+        const dateA = (a.createdAt as any)?.toDate ? (a.createdAt as any).toDate() : new Date(a.createdAt as any)
+        const dateB = (b.createdAt as any)?.toDate ? (b.createdAt as any).toDate() : new Date(b.createdAt as any)
         return dateB.getTime() - dateA.getTime()
       })
       
@@ -518,8 +518,8 @@ export const serviceLocationsService = {
         // Filter active locations on client side
         if (data.isActive) {
           locations.push({
-            id: doc.id,
-            ...data
+            ...data,
+            id: doc.id
           } as ServiceLocation)
         }
       })
@@ -545,8 +545,8 @@ export const serviceLocationsService = {
         // Filter by type and active status on client side
         if (data.type === type && data.isActive) {
           locations.push({
-            id: doc.id,
-            ...data
+            ...data,
+            id: doc.id
           } as ServiceLocation)
         }
       })

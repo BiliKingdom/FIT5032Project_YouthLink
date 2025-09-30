@@ -478,15 +478,16 @@ const loadUserComment = async () => {
   if (!resource.value?.id || !authStore.user) return
   
   const result = await resourceCommentsService.getUserComment(resource.value.id, authStore.user.id)
-  
+
   if (result.success) {
-    userComment.value = result.data
+    userComment.value = result.data ?? null
     if (userComment.value) {
       // Pre-fill form with existing comment data
+      const comment = userComment.value as any
       newComment.value = {
-        overallRating: userComment.value.overallRating,
-        aspectRatings: { ...userComment.value.aspectRatings },
-        comment: userComment.value.comment
+        overallRating: comment.overallRating,
+        aspectRatings: { ...comment.aspectRatings },
+        comment: comment.comment
       }
       isEditingComment.value = true
     }

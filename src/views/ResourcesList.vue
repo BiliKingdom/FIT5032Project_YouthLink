@@ -81,11 +81,11 @@
                         v-for="i in 5"
                         :key="i"
                         :size="14"
-                        :class="i <= Math.round(resource.overallRating) ? 'text-warning' : 'text-muted'"
-                        :fill="i <= Math.round(resource.overallRating) ? 'currentColor' : 'none'"
+                        :class="i <= Math.round((resource as any).overallRating || 0) ? 'text-warning' : 'text-muted'"
+                        :fill="i <= Math.round((resource as any).overallRating || 0) ? 'currentColor' : 'none'"
                       />
                     </div>
-                    <small class="text-muted">({{ resource.overallRating.toFixed(1) }}/5 - {{ resource.totalRatings }} reviews)</small>
+                    <small class="text-muted">({{ ((resource as any).overallRating || 0).toFixed(1) }}/5 - {{ (resource as any).totalRatings || 0 }} reviews)</small>
                   </div>
                 </td>
                 <td>

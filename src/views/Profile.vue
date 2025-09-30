@@ -65,10 +65,10 @@
                           {{ appointment.status }}
                         </span>
                       </div>
-                      <button 
+                      <button
                         v-if="appointment.status === 'pending'"
                         class="btn btn-outline-danger btn-sm"
-                        @click="cancelAppointment(appointment.id)"
+                        @click="cancelAppointment(appointment.id!)"
                       >
                         <X :size="14" />
                       </button>
