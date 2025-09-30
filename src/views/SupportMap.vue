@@ -311,10 +311,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { 
-  MapPin, Search, Phone, AlertTriangle, Navigation, Eye, 
-  Mail, Globe, Users 
-} from 'lucide-vue-next'
+import { MapPin, Search, Phone, TriangleAlert as AlertTriangle, Navigation, Eye, Mail, Globe, Users } from 'lucide-vue-next'
 import { serviceLocationsService } from '@/services/firestore'
 import { 
   getCurrentLocation, 
