@@ -680,6 +680,7 @@ onUnmounted(() => {
   padding-bottom: 0.5rem;
 }
 </style>
+<style>
 /* Scrollbar styles for services list */
 .services-list {
   scrollbar-width: thin;
@@ -702,3 +703,4 @@ onUnmounted(() => {
 .services-list::-webkit-scrollbar-thumb:hover {
   background-color: #adb5bd;
 }
+</style>
