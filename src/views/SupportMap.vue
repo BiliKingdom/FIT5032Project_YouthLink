@@ -645,27 +645,6 @@ onUnmounted(() => {
   box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 
-.services-list {
-  scrollbar-width: thin;
-  scrollbar-color: #dee2e6 transparent;
-}
-
-.services-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.services-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.services-list::-webkit-scrollbar-thumb {
-  background-color: #dee2e6;
-  border-radius: 3px;
-}
-
-.services-list::-webkit-scrollbar-thumb:hover {
-  background-color: #adb5bd;
-}
 </script>
 
 <style>
@@ -701,3 +680,25 @@ onUnmounted(() => {
   padding-bottom: 0.5rem;
 }
 </style>
+/* Scrollbar styles for services list */
+.services-list {
+  scrollbar-width: thin;
+  scrollbar-color: #dee2e6 transparent;
+}
+
+.services-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.services-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.services-list::-webkit-scrollbar-thumb {
+  background-color: #dee2e6;
+  border-radius: 3px;
+}
+
+.services-list::-webkit-scrollbar-thumb:hover {
+  background-color: #adb5bd;
+}
