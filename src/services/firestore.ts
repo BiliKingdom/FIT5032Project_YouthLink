@@ -510,20 +510,22 @@ export const serviceLocationsService = {
   // Get all service locations
   async getAll() {
     try {
-      const q = query(
-        collection(db, 'service_locations'),
-        where('isActive', '==', true),
-        orderBy('name', 'asc')
-      )
-      const querySnapshot = await getDocs(q)
+      const querySnapshot = await getDocs(collection(db, 'service_locations'))
       const locations: ServiceLocation[] = []
       
       querySnapshot.forEach((doc) => {
-        locations.push({
-          id: doc.id,
-          ...doc.data()
-        } as ServiceLocation)
+        const data = doc.data() as ServiceLocation
+        // Filter active locations on client side
+        if (data.isActive) {
+          locations.push({
+            id: doc.id,
+            ...data
+          } as ServiceLocation)
+        }
       })
+      
+      // Sort by name on client side
+      locations.sort((a, b) => a.name.localeCompare(b.name))
       
       return { success: true, data: locations }
     } catch (error) {
@@ -535,21 +537,22 @@ export const serviceLocationsService = {
   // Get service locations by type
   async getByType(type: string) {
     try {
-      const q = query(
-        collection(db, 'service_locations'),
-        where('type', '==', type),
-        where('isActive', '==', true),
-        orderBy('name', 'asc')
-      )
-      const querySnapshot = await getDocs(q)
+      const querySnapshot = await getDocs(collection(db, 'service_locations'))
       const locations: ServiceLocation[] = []
       
       querySnapshot.forEach((doc) => {
-        locations.push({
-          id: doc.id,
-          ...doc.data()
-        } as ServiceLocation)
+        const data = doc.data() as ServiceLocation
+        // Filter by type and active status on client side
+        if (data.type === type && data.isActive) {
+          locations.push({
+            id: doc.id,
+            ...data
+          } as ServiceLocation)
+        }
       })
+      
+      // Sort by name on client side
+      locations.sort((a, b) => a.name.localeCompare(b.name))
       
       return { success: true, data: locations }
     } catch (error) {
