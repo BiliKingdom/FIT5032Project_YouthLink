@@ -1,11 +1,15 @@
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { melbourneServiceLocations } from './locationService'
+import { initializeCourses } from './initializeCourses'
 
 // Sample data for initializing the database
 export const initializeDatabase = async () => {
   try {
     console.log('Initializing Firebase database...')
+
+    // Initialize courses first
+    await initializeCourses()
 
     // Initialize sample mental health resources
     const resourcesData = [

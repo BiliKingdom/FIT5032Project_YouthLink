@@ -43,6 +43,7 @@
             <ul class="dropdown-menu">
               <li><router-link to="/support/map" class="dropdown-item">Find Services</router-link></li>
               <li><router-link to="/support/book" class="dropdown-item">Book Appointment</router-link></li>
+              <li><router-link to="/courses/book" class="dropdown-item">Book Courses</router-link></li>
             </ul>
           </li>
           <li class="nav-item dropdown">

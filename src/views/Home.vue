@@ -143,6 +143,26 @@
           <div class="col-md-6 col-lg-4">
             <div class="card h-100 border-0 shadow-sm">
               <div class="card-body text-center p-4">
+                <div class="feature-icon bg-purple bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                  <Calendar class="text-purple" :size="32" />
+                </div>
+                <h5 class="card-title">Course Booking</h5>
+                <p class="card-text text-muted">
+                  Join our mental health courses and workshops using our interactive calendar booking system.
+                </p>
+                <router-link 
+                  :to="authStore.isLoggedIn ? '/courses/book' : '/auth/login'" 
+                  class="btn btn-outline-purple"
+                >
+                  Book Courses
+                </router-link>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body text-center p-4">
                 <div class="feature-icon bg-info bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
                   <BookOpen class="text-info" :size="32" />
                 </div>
@@ -268,6 +288,17 @@ const authStore = useAuthStore()
 
 .bg-purple {
   background-color: #6f42c1;
+}
+
+.btn-outline-purple {
+  color: #6f42c1;
+  border-color: #6f42c1;
+}
+
+.btn-outline-purple:hover {
+  color: #fff;
+  background-color: #6f42c1;
+  border-color: #6f42c1;
 }
 
 @media (max-width: 768px) {

@@ -7,6 +7,7 @@ import InfoList from '@/views/InfoList.vue'
 import InfoTopic from '@/views/InfoTopic.vue'
 import SupportMap from '@/views/SupportMap.vue'
 import BookAppointment from '@/views/BookAppointment.vue'
+import CourseBooking from '@/views/CourseBooking.vue'
 import ResourcesList from '@/views/ResourcesList.vue'
 import GetInvolved from '@/views/GetInvolved.vue'
 import About from '@/views/About.vue'
@@ -43,6 +44,12 @@ const router = createRouter({
       path: '/support/book',
       name: 'BookAppointment',
       component: BookAppointment,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/courses/book',
+      name: 'CourseBooking',
+      component: CourseBooking,
       meta: { requiresAuth: true }
     },
     {
