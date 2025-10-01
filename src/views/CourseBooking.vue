@@ -3,18 +3,18 @@
     <div class="text-center mb-5">
       <h1 class="display-5 fw-bold mb-3">Course Booking</h1>
       <p class="lead text-muted">
-        Book your mental health and wellness courses using our interactive calendar
+        Browse available courses and book your preferred time slots
       </p>
     </div>
 
-    <!-- Course Selection -->
     <div class="row mb-4">
+      <!-- Step 1 & 2: Course Selection -->
       <div class="col-lg-4">
         <div class="card shadow-sm border-0">
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
               <BookOpen class="me-2" :size="20" />
-              Available Classes
+              Available Courses
             </h5>
           </div>
           <div class="card-body p-0">
@@ -27,7 +27,7 @@
               <div 
                 v-for="course in courses" 
                 :key="course.id"
-                class="list-group-item list-group-item-action"
+                class="list-group-item list-group-item-action course-item"
                 :class="{ 'active': selectedCourse?.id === course.id }"
                 @click="selectCourse(course)"
                 style="cursor: pointer;"
@@ -63,7 +63,7 @@
           </div>
         </div>
 
-        <!-- Selected Course Details -->
+        <!-- Step 3: Course Details -->
         <div v-if="selectedCourse" class="card shadow-sm border-0 mt-4">
           <div class="card-header bg-success text-white">
             <h6 class="mb-0">
@@ -92,13 +92,9 @@
                 <Tag class="text-primary me-2" :size="16" />
                 <strong>Category:</strong> {{ selectedCourse.category }}
               </div>
-              <div class="info-item mb-2">
-                <Repeat class="text-primary me-2" :size="16" />
-                <strong>Type:</strong> {{ getCourseTypeLabel(selectedCourse.courseType) }}
-              </div>
             </div>
 
-            <!-- Course Schedule -->
+            <!-- Course Schedule Display -->
             <div v-if="courseSchedules.length > 0" class="mt-3">
               <h6 class="fw-bold mb-2">Weekly Schedule:</h6>
               <div class="schedule-list">
@@ -111,7 +107,6 @@
               </div>
             </div>
 
-            <!-- One-time Sessions -->
             <div v-if="oneTimeSessions.length > 0" class="mt-3">
               <h6 class="fw-bold mb-2">Scheduled Sessions:</h6>
               <div class="session-list">
@@ -126,18 +121,27 @@
                 </div>
               </div>
             </div>
+
+            <!-- Booking Instructions -->
+            <div class="alert alert-info mt-3">
+              <Info class="me-2" :size="16" />
+              <small>Click on available time slots in the calendar to book this course</small>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Calendar -->
+      <!-- Step 4: Calendar for Time Selection -->
       <div class="col-lg-8">
         <div class="card shadow-sm border-0">
           <div class="card-header bg-info text-white">
             <div class="d-flex justify-content-between align-items-center">
               <h5 class="mb-0">
                 <Calendar class="me-2" :size="20" />
-                Booking Calendar
+                Select Time Slot
+                <span v-if="selectedCourse" class="badge bg-light text-dark ms-2">
+                  {{ selectedCourse.title }}
+                </span>
               </h5>
               <div class="d-flex gap-2">
                 <button 
@@ -162,7 +166,14 @@
             </div>
           </div>
           <div class="card-body p-0">
-            <div id="calendar" ref="calendarEl"></div>
+            <div v-if="!selectedCourse" class="text-center py-5">
+              <BookOpen class="text-muted mb-3" :size="48" />
+              <h6 class="text-muted">Please select a course first</h6>
+              <p class="text-muted">Choose a course from the left panel to view available time slots</p>
+            </div>
+            <div v-else>
+              <div id="calendar" ref="calendarEl"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -221,20 +232,27 @@
     </div>
   </div>
 
-  <!-- Booking Confirmation Modal -->
+  <!-- Step 5 & 6: Capacity Check and User Confirmation Modal -->
   <div class="modal fade" id="bookingModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Confirm Booking</h5>
+          <h5 class="modal-title">
+            <CheckCircle class="text-success me-2" :size="20" />
+            Confirm Course Booking
+          </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div v-if="selectedTimeSlot && selectedCourse">
-            <h6 class="fw-bold">{{ selectedCourse.title }}</h6>
-            <p class="text-muted">{{ selectedCourse.description }}</p>
+            <!-- Course Information -->
+            <div class="course-summary mb-4">
+              <h6 class="fw-bold text-primary">{{ selectedCourse.title }}</h6>
+              <p class="text-muted mb-0">{{ selectedCourse.description }}</p>
+            </div>
             
-            <div class="booking-summary p-3 bg-light rounded">
+            <!-- Booking Details -->
+            <div class="booking-summary p-3 bg-light rounded mb-4">
               <div class="row">
                 <div class="col-6">
                   <strong>Date:</strong><br>
@@ -258,7 +276,35 @@
               </div>
             </div>
 
-            <div class="mt-3">
+            <!-- Capacity Information -->
+            <div class="capacity-info mb-4">
+              <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                <div>
+                  <strong>Available Spots:</strong>
+                  <div class="text-muted small">Maximum {{ selectedCourse.maxParticipants }} participants</div>
+                </div>
+                <div class="text-end">
+                  <span class="badge fs-6" :class="getCapacityBadgeClass(availableSpots)">
+                    {{ availableSpots }} spots left
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Capacity Warning -->
+            <div v-if="availableSpots <= 2 && availableSpots > 0" class="alert alert-warning">
+              <AlertTriangle class="me-2" :size="16" />
+              <strong>Limited spots available!</strong> Only {{ availableSpots }} spot{{ availableSpots > 1 ? 's' : '' }} left.
+            </div>
+
+            <!-- Full Capacity Error -->
+            <div v-if="availableSpots <= 0" class="alert alert-danger">
+              <X class="me-2" :size="16" />
+              <strong>Course is full!</strong> This time slot has reached maximum capacity.
+            </div>
+
+            <!-- User Notes -->
+            <div v-if="availableSpots > 0" class="mt-3">
               <label for="bookingNotes" class="form-label">Notes (Optional)</label>
               <textarea
                 v-model="bookingNotes"
@@ -270,6 +316,22 @@
               ></textarea>
               <div class="form-text">{{ bookingNotes.length }}/500 characters</div>
             </div>
+
+            <!-- User Confirmation Checkbox -->
+            <div v-if="availableSpots > 0" class="mt-4">
+              <div class="form-check">
+                <input
+                  v-model="userConfirmed"
+                  type="checkbox"
+                  id="confirmBooking"
+                  class="form-check-input"
+                  required
+                >
+                <label for="confirmBooking" class="form-check-label">
+                  <strong>I confirm that I want to book this course and will attend the session.</strong>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -277,12 +339,14 @@
             Cancel
           </button>
           <button 
+            v-if="availableSpots > 0"
             type="button" 
-            class="btn btn-primary"
+            class="btn btn-success"
             @click="confirmBooking"
-            :disabled="bookingInProgress"
+            :disabled="bookingInProgress || !userConfirmed"
           >
             <div v-if="bookingInProgress" class="spinner-border spinner-border-sm me-2"></div>
+            <CheckCircle class="me-2" :size="16" />
             {{ bookingInProgress ? 'Booking...' : 'Confirm Booking' }}
           </button>
         </div>
@@ -313,8 +377,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { BookOpen, User, Clock, Users, Info, Calendar, Tag, Repeat, ChevronLeft, ChevronRight, X, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { BookOpen, User, Clock, Users, Info, Calendar, Tag, ChevronLeft, ChevronRight, X, CircleCheck as CheckCircle, CircleAlert as AlertCircle, TriangleAlert as AlertTriangle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { 
   coursesService, 
@@ -334,7 +398,6 @@ import { Calendar as FullCalendar } from '@fullcalendar/core'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import listPlugin from '@fullcalendar/list'
 
 const authStore = useAuthStore()
 
@@ -346,6 +409,8 @@ const bookingInProgress = ref(false)
 const toastMessage = ref('')
 const toastType = ref<'success' | 'error'>('success')
 const bookingNotes = ref('')
+const userConfirmed = ref(false)
+const availableSpots = ref(0)
 
 // Data
 const courses = ref<Course[]>([])
@@ -364,9 +429,11 @@ const initializeCalendar = async () => {
   if (!calendarEl.value) return
 
   const today = new Date()
+  const twoWeeksFromNow = new Date()
+  twoWeeksFromNow.setDate(today.getDate() + 14)
 
   calendarApi.value = new FullCalendar(calendarEl.value, {
-    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
+    plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: 'timeGridWeek',
     headerToolbar: {
       left: 'prev,next today',
@@ -377,7 +444,7 @@ const initializeCalendar = async () => {
     slotMinTime: '08:00:00',
     slotMaxTime: '20:00:00',
     businessHours: {
-      daysOfWeek: [1, 2, 3, 4, 5, 6], // Monday - Saturday
+      daysOfWeek: [1, 2, 3, 4, 5, 6],
       startTime: '09:00',
       endTime: '18:00'
     },
@@ -387,16 +454,15 @@ const initializeCalendar = async () => {
     eventClick: handleEventClick,
     events: [],
     eventColor: '#0066CC',
-    selectConstraint: false, // Allow selection of past dates
-    selectOverlap: false,
+    selectConstraint: false,
     eventOverlap: false,
     validRange: {
-      start: new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()) // Show past dates
+      start: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30), // Show past 30 days
+      end: twoWeeksFromNow // Limit to 2 weeks from now
     }
   })
 
   calendarApi.value.render()
-  await loadCalendarEvents()
 }
 
 // Load courses
@@ -480,7 +546,7 @@ const loadCalendarEvents = async () => {
           borderColor: booking.userId === authStore.user?.id 
             ? (isPast ? '#6c757d' : '#28a745') 
             : (isPast ? '#adb5bd' : '#6c757d'),
-          textColor: isPast ? '#ffffff' : '#ffffff',
+          textColor: '#ffffff',
           extendedProps: {
             booking: booking,
             isUserBooking: booking.userId === authStore.user?.id,
@@ -495,18 +561,20 @@ const loadCalendarEvents = async () => {
       // Add available slots as selectable events
       const slotEvents = availableSlots.map(slot => {
         const isPast = slot.start < new Date()
+        const spotsLeft = getAvailableSpots(slot)
+        
         return {
           id: `slot-${slot.start.getTime()}`,
-          title: isPast ? 'Past Session' : `Available (${getAvailableSpots(slot)} spots)`,
+          title: isPast ? 'Past Session' : `Available (${spotsLeft} spots)`,
           start: slot.start,
           end: slot.end,
           backgroundColor: isPast ? '#f8f9fa' : '#e9ecef',
-          borderColor: isPast ? '#dee2e6' : '#dee2e6',
+          borderColor: isPast ? '#dee2e6' : '#28a745',
           textColor: isPast ? '#6c757d' : '#495057',
           display: 'background',
           extendedProps: {
-            isAvailable: !isPast,
-            availableSpots: getAvailableSpots(slot),
+            isAvailable: !isPast && spotsLeft > 0,
+            availableSpots: spotsLeft,
             isPast: isPast
           }
         }
@@ -612,7 +680,7 @@ const getAvailableSpots = (slot: { start: Date; end: Date }) => {
 }
 
 // Handle date selection
-const handleDateSelect = (selectInfo: any) => {
+const handleDateSelect = async (selectInfo: any) => {
   if (!authStore.isLoggedIn) {
     showToast('Please log in to book courses', 'error')
     return
@@ -651,15 +719,14 @@ const handleDateSelect = (selectInfo: any) => {
     return
   }
   
-  // Check if slot is available
-  const availableSpots = getAvailableSpots({ start, end })
-  if (availableSpots <= 0) {
-    showToast('This time slot is fully booked', 'error')
-    calendarApi.value?.unselect()
-    return
-  }
+  // Calculate available spots
+  const spots = getAvailableSpots({ start, end })
+  availableSpots.value = spots
   
   selectedTimeSlot.value = { start, end }
+  userConfirmed.value = false
+  bookingNotes.value = ''
+  
   const modal = new (window as any).bootstrap.Modal(document.getElementById('bookingModal'))
   modal.show()
   
@@ -715,9 +782,9 @@ const handleEventClick = (clickInfo: any) => {
   }
 }
 
-// Confirm booking
+// Step 7: Confirm booking and store to database
 const confirmBooking = async () => {
-  if (!selectedTimeSlot.value || !selectedCourse.value || !authStore.user) return
+  if (!selectedTimeSlot.value || !selectedCourse.value || !authStore.user || !userConfirmed.value) return
   
   bookingInProgress.value = true
   
@@ -741,6 +808,7 @@ const confirmBooking = async () => {
       // Reset form
       selectedTimeSlot.value = null
       bookingNotes.value = ''
+      userConfirmed.value = false
       
       // Reload data
       await loadUserBookings()
@@ -865,6 +933,12 @@ const getStatusBadgeClass = (status: string) => {
   return classes[status] || 'bg-secondary'
 }
 
+const getCapacityBadgeClass = (spots: number) => {
+  if (spots <= 0) return 'bg-danger'
+  if (spots <= 2) return 'bg-warning'
+  return 'bg-success'
+}
+
 const isPastBooking = (dateTime: any) => {
   const date = dateTime instanceof Date ? dateTime : dateTime.toDate()
   return date < new Date()
@@ -881,6 +955,13 @@ const showToast = (message: string, type: 'success' | 'error') => {
   }
 }
 
+// Watch for course selection changes
+watch(selectedCourse, async (newCourse) => {
+  if (newCourse && calendarApi.value) {
+    await loadCalendarEvents()
+  }
+})
+
 // Lifecycle
 onMounted(async () => {
   await loadCourses()
@@ -896,6 +977,24 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.course-item {
+  transition: all 0.2s ease;
+}
+
+.course-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.course-item.active {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
+.course-item.active .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
 .course-info .info-item {
   display: flex;
   align-items: center;
@@ -920,12 +1019,11 @@ onUnmounted(() => {
   padding: 0.25rem 0;
 }
 
-.list-group-item.active {
-  background-color: var(--bs-primary);
-  border-color: var(--bs-primary);
+.booking-summary {
+  border: 1px solid #dee2e6;
 }
 
-.booking-summary {
+.capacity-info {
   border: 1px solid #dee2e6;
 }
 
