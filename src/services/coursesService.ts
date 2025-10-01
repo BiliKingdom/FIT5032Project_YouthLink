@@ -298,8 +298,7 @@ export const courseBookingsService = {
     try {
       const q = query(
         collection(db, 'course_bookings'),
-        where('userId', '==', userId),
-        orderBy('startTime', 'desc')
+        where('userId', '==', userId)
       )
       const querySnapshot = await getDocs(q)
       const bookings: CourseBooking[] = []
@@ -310,6 +309,13 @@ export const courseBookingsService = {
           id: doc.id,
           ...data
         } as CourseBooking)
+      })
+      
+      // Sort bookings by startTime in JavaScript instead of Firestore
+      bookings.sort((a, b) => {
+        const timeA = a.startTime instanceof Timestamp ? a.startTime.toDate() : new Date(a.startTime)
+        const timeB = b.startTime instanceof Timestamp ? b.startTime.toDate() : new Date(b.startTime)
+        return timeB.getTime() - timeA.getTime() // desc order
       })
       
       return { success: true, data: bookings }
