@@ -14,7 +14,7 @@
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
               <BookOpen class="me-2" :size="20" />
-              Available Courses
+              Available Classes
             </h5>
           </div>
           <div class="card-body p-0">
@@ -138,7 +138,6 @@
               <h5 class="mb-0">
                 <Calendar class="me-2" :size="20" />
                 Booking Calendar
-                <small class="ms-2 opacity-75">(Next 2 weeks available)</small>
               </h5>
               <div class="d-flex gap-2">
                 <button 
@@ -365,7 +364,6 @@ const initializeCalendar = async () => {
   if (!calendarEl.value) return
 
   const today = new Date()
-  const twoWeeksLater = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
 
   calendarApi.value = new FullCalendar(calendarEl.value, {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
@@ -389,12 +387,11 @@ const initializeCalendar = async () => {
     eventClick: handleEventClick,
     events: [],
     eventColor: '#0066CC',
-    selectConstraint: 'businessHours',
+    selectConstraint: false, // Allow selection of past dates
     selectOverlap: false,
     eventOverlap: false,
     validRange: {
-      start: today,
-      end: twoWeeksLater
+      start: new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()) // Show past dates
     }
   })
 
@@ -467,37 +464,53 @@ const loadCalendarEvents = async () => {
       )
       
       // Convert bookings to calendar events
-      const events = courseBookings.map(booking => ({
-        id: booking.id,
-        title: `${booking.courseName} (${getBookingCount(booking)} / ${selectedCourse.value!.maxParticipants})`,
-        start: booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate(),
-        end: booking.endTime instanceof Date ? booking.endTime : booking.endTime.toDate(),
-        backgroundColor: booking.userId === authStore.user?.id ? '#28a745' : '#6c757d',
-        borderColor: booking.userId === authStore.user?.id ? '#28a745' : '#6c757d',
-        extendedProps: {
-          booking: booking,
-          isUserBooking: booking.userId === authStore.user?.id
+      const events = courseBookings.map(booking => {
+        const startDate = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
+        const endDate = booking.endTime instanceof Date ? booking.endTime : booking.endTime.toDate()
+        const isPast = startDate < new Date()
+        
+        return {
+          id: booking.id,
+          title: `${booking.courseName} (${getBookingCount(booking)} / ${selectedCourse.value!.maxParticipants})`,
+          start: startDate,
+          end: endDate,
+          backgroundColor: booking.userId === authStore.user?.id 
+            ? (isPast ? '#6c757d' : '#28a745') 
+            : (isPast ? '#adb5bd' : '#6c757d'),
+          borderColor: booking.userId === authStore.user?.id 
+            ? (isPast ? '#6c757d' : '#28a745') 
+            : (isPast ? '#adb5bd' : '#6c757d'),
+          textColor: isPast ? '#ffffff' : '#ffffff',
+          extendedProps: {
+            booking: booking,
+            isUserBooking: booking.userId === authStore.user?.id,
+            isPast: isPast
+          }
         }
-      }))
+      })
       
       // Generate available time slots
       const availableSlots = generateAvailableSlots()
       
       // Add available slots as selectable events
-      const slotEvents = availableSlots.map(slot => ({
-        id: `slot-${slot.start.getTime()}`,
-        title: `Available (${getAvailableSpots(slot)} spots)`,
-        start: slot.start,
-        end: slot.end,
-        backgroundColor: '#e9ecef',
-        borderColor: '#dee2e6',
-        textColor: '#495057',
-        display: 'background',
-        extendedProps: {
-          isAvailable: true,
-          availableSpots: getAvailableSpots(slot)
+      const slotEvents = availableSlots.map(slot => {
+        const isPast = slot.start < new Date()
+        return {
+          id: `slot-${slot.start.getTime()}`,
+          title: isPast ? 'Past Session' : `Available (${getAvailableSpots(slot)} spots)`,
+          start: slot.start,
+          end: slot.end,
+          backgroundColor: isPast ? '#f8f9fa' : '#e9ecef',
+          borderColor: isPast ? '#dee2e6' : '#dee2e6',
+          textColor: isPast ? '#6c757d' : '#495057',
+          display: 'background',
+          extendedProps: {
+            isAvailable: !isPast,
+            availableSpots: getAvailableSpots(slot),
+            isPast: isPast
+          }
         }
-      }))
+      })
       
       calendarApi.value.removeAllEvents()
       calendarApi.value.addEventSource([...events, ...slotEvents])
@@ -507,17 +520,18 @@ const loadCalendarEvents = async () => {
   }
 }
 
-// Generate available time slots for the next 2 weeks
+// Generate available time slots
 const generateAvailableSlots = () => {
   if (!selectedCourse.value) return []
   
   const slots = []
   const today = new Date()
+  const startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
   const endDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000) // 2 weeks from now
   
   if (selectedCourse.value.courseType === 'weekly') {
     // Generate weekly recurring slots
-    for (let date = new Date(today); date <= endDate; date.setDate(date.getDate() + 1)) {
+    for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
       const dayOfWeek = date.getDay()
       
       // Find schedules for this day
@@ -541,10 +555,7 @@ const generateAvailableSlots = () => {
           const slotEnd = new Date(date)
           slotEnd.setHours(endHour, endMinute, 0, 0)
           
-          // Only add future slots
-          if (slotStart > today) {
-            slots.push({ start: new Date(slotStart), end: new Date(slotEnd) })
-          }
+          slots.push({ start: new Date(slotStart), end: new Date(slotEnd) })
         }
       }
     }
@@ -553,8 +564,8 @@ const generateAvailableSlots = () => {
     for (const session of oneTimeSessions.value) {
       const sessionDate = session.sessionDate instanceof Date ? session.sessionDate : session.sessionDate.toDate()
       
-      // Only add sessions within the next 2 weeks
-      if (sessionDate >= today && sessionDate <= endDate) {
+      // Add sessions within the date range
+      if (sessionDate >= startDate && sessionDate <= endDate) {
         const [startHour, startMinute] = session.startTime.split(':').map(Number)
         const [endHour, endMinute] = session.endTime.split(':').map(Number)
         
@@ -614,6 +625,22 @@ const handleDateSelect = (selectInfo: any) => {
   
   const start = selectInfo.start
   const end = selectInfo.end
+  
+  // Check if this is a past date
+  if (start < new Date()) {
+    showToast('Cannot book past sessions', 'error')
+    calendarApi.value?.unselect()
+    return
+  }
+  
+  // Check if this is within 2 weeks
+  const twoWeeksFromNow = new Date()
+  twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14)
+  if (start > twoWeeksFromNow) {
+    showToast('Can only book sessions within 2 weeks', 'error')
+    calendarApi.value?.unselect()
+    return
+  }
   
   // Check if this is a valid time slot
   const isValidSlot = isValidTimeSlot(start, end)
@@ -681,7 +708,7 @@ const isValidTimeSlot = (start: Date, end: Date) => {
 // Handle event click
 const handleEventClick = (clickInfo: any) => {
   const booking = clickInfo.event.extendedProps.booking
-  if (booking && booking.userId === authStore.user?.id) {
+  if (booking && booking.userId === authStore.user?.id && !clickInfo.event.extendedProps.isPast) {
     if (confirm('Do you want to cancel this booking?')) {
       cancelBooking(booking.id)
     }

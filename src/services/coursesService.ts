@@ -225,21 +225,24 @@ export const courseBookingsService = {
   // Check for booking conflicts
   async checkConflicts(userId: string, startTime: Timestamp | Date, endTime: Timestamp | Date) {
     try {
-      const querySnapshot = await getDocs(collection(db, 'course_bookings'))
+      const q = query(
+        collection(db, 'course_bookings'),
+        where('userId', '==', userId),
+        where('status', '==', 'confirmed')
+      )
+      const querySnapshot = await getDocs(q)
       let hasConflict = false
       
       querySnapshot.forEach((doc) => {
         const data = doc.data() as CourseBooking
-        if (data.userId === userId && data.status === 'confirmed') {
-          const existingStart = data.startTime instanceof Timestamp ? data.startTime.toDate() : new Date(data.startTime)
-          const existingEnd = data.endTime instanceof Timestamp ? data.endTime.toDate() : new Date(data.endTime)
-          const newStart = startTime instanceof Timestamp ? startTime.toDate() : new Date(startTime)
-          const newEnd = endTime instanceof Timestamp ? endTime.toDate() : new Date(endTime)
-          
-          // Check for overlap
-          if (newStart < existingEnd && newEnd > existingStart) {
-            hasConflict = true
-          }
+        const existingStart = data.startTime instanceof Timestamp ? data.startTime.toDate() : new Date(data.startTime)
+        const existingEnd = data.endTime instanceof Timestamp ? data.endTime.toDate() : new Date(data.endTime)
+        const newStart = startTime instanceof Timestamp ? startTime.toDate() : new Date(startTime)
+        const newEnd = endTime instanceof Timestamp ? endTime.toDate() : new Date(endTime)
+        
+        // Check for overlap
+        if (newStart < existingEnd && newEnd > existingStart) {
+          hasConflict = true
         }
       })
       
@@ -263,19 +266,22 @@ export const courseBookingsService = {
       const sessionStart = startTime instanceof Timestamp ? startTime.toDate() : new Date(startTime)
       
       // Count existing bookings for this time slot
-      const querySnapshot = await getDocs(collection(db, 'course_bookings'))
+      const q = query(
+        collection(db, 'course_bookings'),
+        where('courseId', '==', courseId),
+        where('status', '==', 'confirmed')
+      )
+      const querySnapshot = await getDocs(q)
       let bookingCount = 0
       
       querySnapshot.forEach((doc) => {
         const data = doc.data() as CourseBooking
-        if (data.courseId === courseId && data.status === 'confirmed') {
-          const existingStart = data.startTime instanceof Timestamp ? data.startTime.toDate() : new Date(data.startTime)
-          
-          // Check if it's the same time slot (within 30 minutes)
-          const timeDiff = Math.abs(existingStart.getTime() - sessionStart.getTime())
-          if (timeDiff < 30 * 60 * 1000) { // 30 minutes in milliseconds
-            bookingCount++
-          }
+        const existingStart = data.startTime instanceof Timestamp ? data.startTime.toDate() : new Date(data.startTime)
+        
+        // Check if it's the same time slot (within 30 minutes)
+        const timeDiff = Math.abs(existingStart.getTime() - sessionStart.getTime())
+        if (timeDiff < 30 * 60 * 1000) { // 30 minutes in milliseconds
+          bookingCount++
         }
       })
       
@@ -290,24 +296,20 @@ export const courseBookingsService = {
   // Get user's bookings
   async getUserBookings(userId: string) {
     try {
-      const querySnapshot = await getDocs(collection(db, 'course_bookings'))
+      const q = query(
+        collection(db, 'course_bookings'),
+        where('userId', '==', userId),
+        orderBy('startTime', 'desc')
+      )
+      const querySnapshot = await getDocs(q)
       const bookings: CourseBooking[] = []
       
       querySnapshot.forEach((doc) => {
         const data = doc.data() as CourseBooking
-        if (data.userId === userId) {
-          bookings.push({
-            id: doc.id,
-            ...data
-          } as CourseBooking)
-        }
-      })
-      
-      // Sort by start time
-      bookings.sort((a, b) => {
-        const dateA = a.startTime instanceof Timestamp ? a.startTime.toDate() : new Date(a.startTime)
-        const dateB = b.startTime instanceof Timestamp ? b.startTime.toDate() : new Date(b.startTime)
-        return dateA.getTime() - dateB.getTime()
+        bookings.push({
+          id: doc.id,
+          ...data
+        } as CourseBooking)
       })
       
       return { success: true, data: bookings }
@@ -320,17 +322,19 @@ export const courseBookingsService = {
   // Get all bookings for calendar display
   async getAllBookings() {
     try {
-      const querySnapshot = await getDocs(collection(db, 'course_bookings'))
+      const q = query(
+        collection(db, 'course_bookings'),
+        where('status', '==', 'confirmed')
+      )
+      const querySnapshot = await getDocs(q)
       const bookings: CourseBooking[] = []
       
       querySnapshot.forEach((doc) => {
         const data = doc.data() as CourseBooking
-        if (data.status === 'confirmed') {
-          bookings.push({
-            id: doc.id,
-            ...data
-          } as CourseBooking)
-        }
+        bookings.push({
+          id: doc.id,
+          ...data
+        } as CourseBooking)
       })
       
       return { success: true, data: bookings }
