@@ -1,9 +1,9 @@
 <template>
   <div class="container py-5">
     <div class="text-center mb-5">
-      <h1 class="display-5 fw-bold mb-3">Course Booking</h1>
+      <h1 class="display-5 fw-bold mb-3">课程预约</h1>
       <p class="lead text-muted">
-        Book your mental health and wellness courses using our interactive calendar
+        使用我们的交互式日历预约您的心理健康和健康课程
       </p>
     </div>
 
@@ -14,7 +14,7 @@
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
               <BookOpen class="me-2" :size="20" />
-              Available Classes
+              可选课程
             </h5>
           </div>
           <div class="card-body p-0">
@@ -68,7 +68,7 @@
           <div class="card-header bg-success text-white">
             <h6 class="mb-0">
               <Info class="me-2" :size="16" />
-              Course Details
+              课程详情
             </h6>
           </div>
           <div class="card-body">
@@ -78,19 +78,19 @@
             <div class="course-info">
               <div class="info-item mb-2">
                 <User class="text-primary me-2" :size="16" />
-                <strong>Instructor:</strong> {{ selectedCourse.instructor }}
+                <strong>讲师:</strong> {{ selectedCourse.instructor }}
               </div>
               <div class="info-item mb-2">
                 <Clock class="text-primary me-2" :size="16" />
-                <strong>Duration:</strong> {{ selectedCourse.duration }} minutes
+                <strong>时长:</strong> {{ selectedCourse.duration }} 分钟
               </div>
               <div class="info-item mb-2">
                 <Users class="text-primary me-2" :size="16" />
-                <strong>Max Participants:</strong> {{ selectedCourse.maxParticipants }}
+                <strong>最大人数:</strong> {{ selectedCourse.maxParticipants }}
               </div>
               <div class="info-item mb-2">
                 <Tag class="text-primary me-2" :size="16" />
-                <strong>Category:</strong> {{ selectedCourse.category }}
+                <strong>类别:</strong> {{ selectedCourse.category }}
               </div>
               <div class="info-item mb-2">
                 <Repeat class="text-primary me-2" :size="16" />
@@ -100,7 +100,7 @@
 
             <!-- Course Schedule -->
             <div v-if="courseSchedules.length > 0" class="mt-3">
-              <h6 class="fw-bold mb-2">Weekly Schedule:</h6>
+              <h6 class="fw-bold mb-2">每周时间安排:</h6>
               <div class="schedule-list">
                 <div v-for="schedule in courseSchedules" :key="schedule.id" class="schedule-item mb-1">
                   <small class="text-muted">
@@ -113,7 +113,7 @@
 
             <!-- One-time Sessions -->
             <div v-if="oneTimeSessions.length > 0" class="mt-3">
-              <h6 class="fw-bold mb-2">Scheduled Sessions:</h6>
+              <h6 class="fw-bold mb-2">预定课程:</h6>
               <div class="session-list">
                 <div v-for="session in oneTimeSessions.slice(0, 3)" :key="session.id" class="session-item mb-1">
                   <small class="text-muted">
@@ -122,7 +122,7 @@
                   </small>
                 </div>
                 <div v-if="oneTimeSessions.length > 3" class="text-muted small">
-                  +{{ oneTimeSessions.length - 3 }} more sessions
+                  +{{ oneTimeSessions.length - 3 }} 更多课程
                 </div>
               </div>
             </div>
@@ -137,7 +137,7 @@
             <div class="d-flex justify-content-between align-items-center">
               <h5 class="mb-0">
                 <Calendar class="me-2" :size="20" />
-                Booking Calendar
+                预约日历
               </h5>
               <div class="d-flex gap-2">
                 <button 
@@ -150,7 +150,7 @@
                   class="btn btn-outline-light btn-sm"
                   @click="calendarApi?.today()"
                 >
-                  Today
+                  今天
                 </button>
                 <button 
                   class="btn btn-outline-light btn-sm"
@@ -175,7 +175,7 @@
           <div class="card-header bg-warning text-dark">
             <h5 class="mb-0">
               <BookOpen class="me-2" :size="20" />
-              My Bookings
+              我的预约
             </h5>
           </div>
           <div class="card-body">
@@ -184,7 +184,7 @@
                 <div class="booking-card p-3 border rounded">
                   <div class="d-flex justify-content-between align-items-start mb-2">
                     <h6 class="fw-bold mb-0">{{ booking.courseName }}</h6>
-                    <span class="badge" :class="getStatusBadgeClass(booking.status)">
+                    <span class="badge bg-success">
                       {{ booking.status }}
                     </span>
                   </div>
@@ -205,7 +205,7 @@
                       @click="cancelBooking(booking.id!)"
                     >
                       <X class="me-1" :size="12" />
-                      Cancel
+                      取消
                     </button>
                   </div>
                 </div>
@@ -213,7 +213,7 @@
             </div>
             <div v-else class="text-center py-4">
               <BookOpen class="text-muted mb-2" :size="48" />
-              <p class="text-muted">No bookings yet. Select a course and click on available time slots to book!</p>
+              <p class="text-muted">还没有预约。选择课程并点击可用时段进行预约！</p>
             </div>
           </div>
         </div>
@@ -226,7 +226,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Confirm Booking</h5>
+          <h5 class="modal-title">确认预约</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -237,53 +237,76 @@
             <div class="booking-summary p-3 bg-light rounded">
               <div class="row">
                 <div class="col-6">
-                  <strong>Date:</strong><br>
+                  <strong>日期:</strong><br>
                   <span class="text-muted">{{ formatModalDate(selectedTimeSlot.start) }}</span>
                 </div>
                 <div class="col-6">
-                  <strong>Time:</strong><br>
+                  <strong>时间:</strong><br>
                   <span class="text-muted">{{ formatModalTime(selectedTimeSlot.start) }} - {{ formatModalTime(selectedTimeSlot.end) }}</span>
                 </div>
               </div>
               <hr>
               <div class="row">
                 <div class="col-6">
-                  <strong>Instructor:</strong><br>
+                  <strong>讲师:</strong><br>
                   <span class="text-muted">{{ selectedCourse.instructor }}</span>
                 </div>
                 <div class="col-6">
-                  <strong>Duration:</strong><br>
+                  <strong>时长:</strong><br>
                   <span class="text-muted">{{ selectedCourse.duration }} minutes</span>
+                </div>
+              </div>
+              <hr>
+              <div class="row">
+                <div class="col-12">
+                  <strong>剩余名额:</strong><br>
+                  <span class="text-muted">{{ getAvailableSpots(selectedTimeSlot) }} / {{ selectedCourse.maxParticipants }}</span>
+                  <div v-if="getAvailableSpots(selectedTimeSlot) <= 2" class="text-warning small mt-1">
+                    ⚠️ 名额即将满员！
+                  </div>
                 </div>
               </div>
             </div>
 
             <div class="mt-3">
-              <label for="bookingNotes" class="form-label">Notes (Optional)</label>
+              <div class="form-check mb-3">
+                <input
+                  v-model="confirmBooking"
+                  type="checkbox"
+                  id="confirmBooking"
+                  class="form-check-input"
+                  required
+                >
+                <label for="confirmBooking" class="form-check-label">
+                  我确认要预约这门课程，并承诺按时参加
+                </label>
+              </div>
+              
+              <label for="bookingNotes" class="form-label">备注 (可选)</label>
               <textarea
                 v-model="bookingNotes"
                 id="bookingNotes"
                 class="form-control"
                 rows="3"
-                placeholder="Any special requirements or notes..."
+                placeholder="任何特殊要求或备注..."
                 maxlength="500"
               ></textarea>
-              <div class="form-text">{{ bookingNotes.length }}/500 characters</div>
+              <div class="form-text">{{ bookingNotes.length }}/500 字符</div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-            Cancel
+            取消
           </button>
           <button 
             type="button" 
             class="btn btn-primary"
-            @click="confirmBooking"
-            :disabled="bookingInProgress"
+            @click="submitBooking"
+            :disabled="bookingInProgress || !confirmBooking || getAvailableSpots(selectedTimeSlot) <= 0"
           >
             <div v-if="bookingInProgress" class="spinner-border spinner-border-sm me-2"></div>
-            {{ bookingInProgress ? 'Booking...' : 'Confirm Booking' }}
+            {{ bookingInProgress ? '预约中...' : '确认预约' }}
           </button>
         </div>
       </div>
@@ -302,7 +325,7 @@
       <div class="toast-header">
         <CheckCircle v-if="toastType === 'success'" class="text-success me-2" :size="16" />
         <AlertCircle v-else class="text-danger me-2" :size="16" />
-        <strong class="me-auto">{{ toastType === 'success' ? 'Success' : 'Error' }}</strong>
+        <strong class="me-auto">{{ toastType === 'success' ? '成功' : '错误' }}</strong>
         <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
       </div>
       <div class="toast-body">
@@ -346,6 +369,7 @@ const bookingInProgress = ref(false)
 const toastMessage = ref('')
 const toastType = ref<'success' | 'error'>('success')
 const bookingNotes = ref('')
+const confirmBooking = ref(false)
 
 // Data
 const courses = ref<Course[]>([])
@@ -614,12 +638,12 @@ const getAvailableSpots = (slot: { start: Date; end: Date }) => {
 // Handle date selection
 const handleDateSelect = (selectInfo: any) => {
   if (!authStore.isLoggedIn) {
-    showToast('Please log in to book courses', 'error')
+    showToast('请登录后预约课程', 'error')
     return
   }
   
   if (!selectedCourse.value) {
-    showToast('Please select a course first', 'error')
+    showToast('请先选择一门课程', 'error')
     return
   }
   
@@ -628,7 +652,7 @@ const handleDateSelect = (selectInfo: any) => {
   
   // Check if this is a past date
   if (start < new Date()) {
-    showToast('Cannot book past sessions', 'error')
+    showToast('无法预约过去的课程', 'error')
     calendarApi.value?.unselect()
     return
   }
@@ -637,7 +661,7 @@ const handleDateSelect = (selectInfo: any) => {
   const twoWeeksFromNow = new Date()
   twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14)
   if (start > twoWeeksFromNow) {
-    showToast('Can only book sessions within 2 weeks', 'error')
+    showToast('只能预约两周内的课程', 'error')
     calendarApi.value?.unselect()
     return
   }
@@ -646,7 +670,7 @@ const handleDateSelect = (selectInfo: any) => {
   const isValidSlot = isValidTimeSlot(start, end)
   
   if (!isValidSlot) {
-    showToast('Please select a valid time slot for this course', 'error')
+    showToast('请为此课程选择有效的时段', 'error')
     calendarApi.value?.unselect()
     return
   }
@@ -654,12 +678,13 @@ const handleDateSelect = (selectInfo: any) => {
   // Check if slot is available
   const availableSpots = getAvailableSpots({ start, end })
   if (availableSpots <= 0) {
-    showToast('This time slot is fully booked', 'error')
+    showToast('此时段已满员', 'error')
     calendarApi.value?.unselect()
     return
   }
   
   selectedTimeSlot.value = { start, end }
+  confirmBooking.value = false // 重置确认状态
   const modal = new (window as any).bootstrap.Modal(document.getElementById('bookingModal'))
   modal.show()
   
@@ -709,14 +734,14 @@ const isValidTimeSlot = (start: Date, end: Date) => {
 const handleEventClick = (clickInfo: any) => {
   const booking = clickInfo.event.extendedProps.booking
   if (booking && booking.userId === authStore.user?.id && !clickInfo.event.extendedProps.isPast) {
-    if (confirm('Do you want to cancel this booking?')) {
+    if (confirm('您要取消此预约吗？')) {
       cancelBooking(booking.id)
     }
   }
 }
 
 // Confirm booking
-const confirmBooking = async () => {
+const submitBooking = async () => {
   if (!selectedTimeSlot.value || !selectedCourse.value || !authStore.user) return
   
   bookingInProgress.value = true
@@ -734,19 +759,20 @@ const confirmBooking = async () => {
     })
     
     if (result.success) {
-      showToast('Course booked successfully!', 'success')
+      showToast('课程预约成功！', 'success')
       const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('bookingModal'))
       modal.hide()
       
       // Reset form
       selectedTimeSlot.value = null
       bookingNotes.value = ''
+      confirmBooking.value = false
       
       // Reload data
       await loadUserBookings()
       await loadCalendarEvents()
     } else {
-      showToast(result.error || 'Failed to book course', 'error')
+      showToast(result.error || '课程预约失败', 'error')
     }
   } catch (error) {
     console.error('Error booking course:', error)
@@ -772,16 +798,16 @@ const loadUserBookings = async () => {
 
 // Cancel booking
 const cancelBooking = async (bookingId: string) => {
-  if (!confirm('Are you sure you want to cancel this booking?')) return
+  if (!confirm('您确定要取消此预约吗？')) return
   
   try {
     const result = await courseBookingsService.cancel(bookingId)
     if (result.success) {
-      showToast('Booking cancelled successfully', 'success')
+      showToast('预约取消成功', 'success')
       await loadUserBookings()
       await loadCalendarEvents()
     } else {
-      showToast('Failed to cancel booking', 'error')
+      showToast('取消预约失败', 'error')
     }
   } catch (error) {
     console.error('Error cancelling booking:', error)
@@ -791,7 +817,7 @@ const cancelBooking = async (bookingId: string) => {
 
 // Utility functions
 const getDayName = (dayOfWeek: number) => {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
   return days[dayOfWeek]
 }
 
@@ -812,7 +838,7 @@ const formatSessionDate = (dateTime: any) => {
 
 const formatBookingDate = (dateTime: any) => {
   const date = dateTime instanceof Date ? dateTime : dateTime.toDate()
-  return date.toLocaleDateString('en-AU', { 
+  return date.toLocaleDateString('zh-CN', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
@@ -822,11 +848,11 @@ const formatBookingDate = (dateTime: any) => {
 
 const formatBookingTime = (dateTime: any) => {
   const date = dateTime instanceof Date ? dateTime : dateTime.toDate()
-  return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
 const formatModalDate = (date: Date) => {
-  return date.toLocaleDateString('en-AU', { 
+  return date.toLocaleDateString('zh-CN', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
@@ -835,7 +861,7 @@ const formatModalDate = (date: Date) => {
 }
 
 const formatModalTime = (date: Date) => {
-  return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
 const getCourseTypeBadge = (courseType: string) => {
@@ -849,9 +875,9 @@ const getCourseTypeBadge = (courseType: string) => {
 
 const getCourseTypeLabel = (courseType: string) => {
   const labels: { [key: string]: string } = {
-    'weekly': 'Weekly',
-    'monthly': 'Monthly',
-    'one-time': 'One-time'
+    'weekly': '每周',
+    'monthly': '每月',
+    'one-time': '一次性'
   }
   return labels[courseType] || courseType
 }

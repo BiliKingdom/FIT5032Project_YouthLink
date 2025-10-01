@@ -187,7 +187,7 @@ export const courseBookingsService = {
       if (conflictCheck.hasConflict) {
         return { 
           success: false, 
-          error: 'You already have a booking at this time. Please choose a different time slot.' 
+          error: '您在此时间已有预约。请选择其他时段。' 
         }
       }
       
@@ -204,7 +204,7 @@ export const courseBookingsService = {
       if (capacityCheck.isFull) {
         return { 
           success: false, 
-          error: 'This time slot is fully booked. Please choose another time.' 
+          error: '此时段已满员。请选择其他时间。' 
         }
       }
       
@@ -218,7 +218,7 @@ export const courseBookingsService = {
       return { success: true, id: docRef.id }
     } catch (error) {
       console.error('Error creating booking:', error)
-      return { success: false, error: 'Failed to create booking' }
+      return { success: false, error: '创建预约失败' }
     }
   },
 
@@ -249,7 +249,7 @@ export const courseBookingsService = {
       return { success: true, hasConflict }
     } catch (error) {
       console.error('Error checking conflicts:', error)
-      return { success: false, error: 'Failed to check conflicts' }
+      return { success: false, error: '检查冲突失败' }
     }
   },
 
@@ -289,7 +289,7 @@ export const courseBookingsService = {
       return { success: true, isFull, currentBookings: bookingCount, maxCapacity: course.maxParticipants }
     } catch (error) {
       console.error('Error checking capacity:', error)
-      return { success: false, error: 'Failed to check capacity' }
+      return { success: false, error: '检查容量失败' }
     }
   },
 
@@ -321,7 +321,7 @@ export const courseBookingsService = {
       return { success: true, data: bookings }
     } catch (error) {
       console.error('Error fetching user bookings:', error)
-      return { success: false, error: 'Failed to fetch bookings' }
+      return { success: false, error: '获取预约失败' }
     }
   },
 
@@ -346,7 +346,7 @@ export const courseBookingsService = {
       return { success: true, data: bookings }
     } catch (error) {
       console.error('Error fetching all bookings:', error)
-      return { success: false, error: 'Failed to fetch bookings' }
+      return { success: false, error: '获取所有预约失败' }
     }
   },
 
@@ -360,7 +360,7 @@ export const courseBookingsService = {
       return { success: true }
     } catch (error) {
       console.error('Error cancelling booking:', error)
-      return { success: false, error: 'Failed to cancel booking' }
+      return { success: false, error: '取消预约失败' }
     }
   }
 }
