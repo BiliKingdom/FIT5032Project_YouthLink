@@ -12,6 +12,7 @@ import ResourceDetail from '@/views/ResourceDetail.vue'
 import GetInvolved from '@/views/GetInvolved.vue'
 import About from '@/views/About.vue'
 import Contact from '@/views/Contact.vue'
+import AccessibilityStatement from '@/views/AccessibilityStatement.vue'
 import Login from '@/views/auth/Login.vue'
 import Register from '@/views/auth/Register.vue'
 import Profile from '@/views/Profile.vue'
@@ -74,6 +75,11 @@ const router = createRouter({
       path: '/contact',
       name: 'Contact',
       component: Contact
+    },
+    {
+      path: '/accessibility',
+      name: 'AccessibilityStatement',
+      component: AccessibilityStatement
     },
     {
       path: '/auth/login',

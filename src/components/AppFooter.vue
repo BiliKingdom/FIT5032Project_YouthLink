@@ -29,6 +29,7 @@
             <li><router-link to="/support/book" class="text-light-emphasis text-decoration-none">Book Appointment</router-link></li>
             <li><router-link to="/contact" class="text-light-emphasis text-decoration-none">Contact Us</router-link></li>
             <li><router-link to="/about" class="text-light-emphasis text-decoration-none">About Us</router-link></li>
+            <li><router-link to="/accessibility" class="text-light-emphasis text-decoration-none">Accessibility</router-link></li>
           </ul>
         </div>
         
