@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-vue-next'
+import { CircleCheck as CheckCircle, CircleAlert as AlertCircle, TriangleAlert as AlertTriangle, Info } from 'lucide-vue-next'
 import { useNotifications, type NotificationType } from '@/composables/useNotifications'
 
 const { notifications, removeNotification } = useNotifications()

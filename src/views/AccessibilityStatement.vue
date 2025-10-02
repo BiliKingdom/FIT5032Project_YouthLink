@@ -173,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-import { CheckCircle, Mail, MapPin } from 'lucide-vue-next'
+import { CircleCheck as CheckCircle, Mail, MapPin } from 'lucide-vue-next'
 </script>
 
 <style scoped>
