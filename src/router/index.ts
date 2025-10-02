@@ -17,6 +17,8 @@ import Register from '@/views/auth/Register.vue'
 import Profile from '@/views/Profile.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 import CourseManagement from '@/views/admin/CourseManagement.vue'
+import UsersTable from '@/views/admin/UsersTable.vue'
+import AppointmentsTable from '@/views/admin/AppointmentsTable.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -100,6 +102,18 @@ const router = createRouter({
       path: '/admin/courses',
       name: 'CourseManagement',
       component: CourseManagement,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/users',
+      name: 'UsersTable',
+      component: UsersTable,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/appointments',
+      name: 'AppointmentsTable',
+      component: AppointmentsTable,
       meta: { requiresAdmin: true }
     }
   ]

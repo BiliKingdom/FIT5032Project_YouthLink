@@ -162,27 +162,27 @@
           <div class="card-body">
             <div class="row g-3">
               <div class="col-6">
-                <button class="btn btn-outline-primary w-100">
-                  <Mail class="mb-2" :size="20" />
-                  <div>Send Bulk Email</div>
-                </button>
+                <router-link to="/admin/users" class="btn btn-outline-primary w-100">
+                  <Users class="mb-2" :size="20" />
+                  <div>User Management</div>
+                </router-link>
               </div>
               <div class="col-6">
-                <button class="btn btn-outline-success w-100">
+                <router-link to="/admin/appointments" class="btn btn-outline-success w-100">
                   <Calendar class="mb-2" :size="20" />
-                  <div>Manage Events</div>
-                </button>
+                  <div>Appointments</div>
+                </router-link>
               </div>
               <div class="col-6">
-                <button class="btn btn-outline-warning w-100">
+                <router-link to="/admin/courses" class="btn btn-outline-warning w-100">
                   <BookOpen class="mb-2" :size="20" />
-                  <div>Add Resource</div>
-                </button>
+                  <div>Course Management</div>
+                </router-link>
               </div>
               <div class="col-6">
                 <button class="btn btn-outline-info w-100">
-                  <Users class="mb-2" :size="20" />
-                  <div>User Management</div>
+                  <Mail class="mb-2" :size="20" />
+                  <div>Send Bulk Email</div>
                 </button>
               </div>
             </div>
