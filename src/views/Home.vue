@@ -187,6 +187,14 @@
             <p class="lead mb-4">
               If you're experiencing a mental health crisis, help is available 24/7
             </p>
+            <div class="mb-4">
+              <img
+                src="https://images.pexels.com/photos/8926553/pexels-photo-8926553.jpeg"
+                alt="Young people supporting each other in mental health"
+                class="img-fluid rounded shadow-lg"
+                style="max-height: 300px; object-fit: cover; width: 100%;"
+              >
+            </div>
             <div class="row g-3 justify-content-center">
               <div class="col-sm-6 col-md-4">
                 <div class="p-3 bg-white bg-opacity-10 rounded">
