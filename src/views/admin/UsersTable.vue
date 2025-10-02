@@ -153,7 +153,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { RefreshCw, Download, AlertCircle, CheckCircle, Eye, UserX, UserCheck } from 'lucide-vue-next'
+import { RefreshCw, Download, CircleAlert as AlertCircle, CircleCheck as CheckCircle, Eye, UserX, UserCheck } from 'lucide-vue-next'
 import BaseDataTable from '@/components/tables/BaseDataTable.vue'
 import { useDataTable } from '@/composables/useDataTable'
 import { usersTableService, type UserTableData } from '@/services/tables/usersTableService'
