@@ -332,16 +332,16 @@
 import { ref, onMounted } from 'vue'
 import { Plus, MoveVertical as MoreVertical, User, Clock, Users, Tag, Calendar, Ban, Trash2 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
-import { 
-  coursesService, 
+import {
+  coursesService,
   courseSchedulesService,
   courseExceptionsService,
   oneTimeSessionsService,
   type Course,
   type CourseSchedule,
   type CourseException,
-  type OneTimeCourseSession
-} from '@/services/coursesService'
+  type OneTimeSession
+} from '@/services/supabaseCoursesService'
 
 const authStore = useAuthStore()
 
@@ -360,11 +360,11 @@ const courseForm = ref({
   description: '',
   instructor: '',
   duration: 60,
-  maxParticipants: 12,
+  max_participants: 12,
   category: 'Mental Health',
-  courseType: 'weekly' as 'weekly' | 'monthly' | 'one-time',
+  course_type: 'weekly' as 'one-time' | 'weekly' | 'monthly',
   price: 0,
-  isActive: true
+  is_active: true
 })
 
 const weeklySchedules = ref<Array<{
@@ -412,15 +412,15 @@ const editCourse = async (course: Course) => {
     description: course.description,
     instructor: course.instructor,
     duration: course.duration,
-    maxParticipants: course.maxParticipants,
+    max_participants: course.max_participants,
     category: course.category,
-    courseType: course.courseType,
+    course_type: course.course_type,
     price: course.price,
-    isActive: course.isActive
+    is_active: course.is_active
   }
 
   // Load existing schedules/sessions
-  if (course.courseType === 'weekly' && course.id) {
+  if (course.course_type === 'weekly' && course.id) {
     const result = await courseSchedulesService.getByCourseId(course.id)
     if (result.success) {
       weeklySchedules.value = (result.data || []).map(schedule => ({
@@ -476,27 +476,27 @@ const saveCourse = async () => {
       
       if (courseId) {
         // Save schedules/sessions
-        if (courseForm.value.courseType === 'weekly') {
+        if (courseForm.value.course_type === 'weekly') {
           for (const schedule of weeklySchedules.value) {
             if (schedule.startTime && schedule.endTime) {
               await courseSchedulesService.create({
-                courseId,
-                dayOfWeek: schedule.dayOfWeek,
-                startTime: schedule.startTime,
-                endTime: schedule.endTime,
-                isActive: true
+                course_id: courseId,
+                day_of_week: schedule.dayOfWeek,
+                start_time: schedule.startTime,
+                end_time: schedule.endTime,
+                is_active: true
               })
             }
           }
-        } else if (courseForm.value.courseType === 'one-time') {
+        } else if (courseForm.value.course_type === 'one-time') {
           for (const session of oneTimeSessions.value) {
             if (session.sessionDate && session.startTime && session.endTime) {
               await oneTimeSessionsService.create({
-                courseId,
-                sessionDate: new Date(session.sessionDate),
-                startTime: session.startTime,
-                endTime: session.endTime,
-                isActive: true
+                course_id: courseId,
+                session_date: session.sessionDate,
+                start_time: session.startTime,
+                end_time: session.endTime,
+                is_active: true
               })
             }
           }
@@ -550,10 +550,10 @@ const addException = async () => {
   
   try {
     const result = await courseExceptionsService.create({
-      courseId: selectedCourseForExceptions.value.id,
-      exceptionDate: newException.value.exceptionDate,
-      reason: newException.value.reason || undefined,
-      createdBy: authStore.user?.id || ''
+      course_id: selectedCourseForExceptions.value.id,
+      exception_date: newException.value.exceptionDate,
+      reason: newException.value.reason || null,
+      created_by: authStore.user?.id || ''
     })
     
     if (result.success) {
@@ -599,11 +599,11 @@ const resetCourseForm = () => {
     description: '',
     instructor: '',
     duration: 60,
-    maxParticipants: 12,
+    max_participants: 12,
     category: 'Mental Health',
-    courseType: 'weekly',
+    course_type: 'weekly',
     price: 0,
-    isActive: true
+    is_active: true
   }
   weeklySchedules.value = []
   oneTimeSessions.value = []
@@ -612,10 +612,10 @@ const resetCourseForm = () => {
 const onCourseTypeChange = () => {
   weeklySchedules.value = []
   oneTimeSessions.value = []
-  
-  if (courseForm.value.courseType === 'weekly') {
+
+  if (courseForm.value.course_type === 'weekly') {
     addSchedule()
-  } else if (courseForm.value.courseType === 'one-time') {
+  } else if (courseForm.value.course_type === 'one-time') {
     addSession()
   }
 }

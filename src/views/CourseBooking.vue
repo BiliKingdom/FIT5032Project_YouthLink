@@ -47,12 +47,12 @@
                       </small>
                       <small class="text-muted">
                         <Users class="me-1" :size="12" />
-                        Max {{ course.maxParticipants }}
+                        Max {{ course.max_participants }}
                       </small>
                     </div>
                     <div class="mt-2">
-                      <span class="badge" :class="getCourseTypeBadge(course.courseType)">
-                        {{ getCourseTypeLabel(course.courseType) }}
+                      <span class="badge" :class="getCourseTypeBadge(course.course_type)">
+                        {{ getCourseTypeLabel(course.course_type) }}
                       </span>
                     </div>
                   </div>
@@ -86,7 +86,7 @@
               </div>
               <div class="info-item mb-2">
                 <Users class="text-primary me-2" :size="16" />
-                <strong>Max Participants:</strong> {{ selectedCourse.maxParticipants }}
+                <strong>Max Participants:</strong> {{ selectedCourse.max_participants }}
               </div>
               <div class="info-item mb-2">
                 <Tag class="text-primary me-2" :size="16" />
@@ -94,7 +94,7 @@
               </div>
               <div class="info-item mb-2">
                 <Repeat class="text-primary me-2" :size="16" />
-                <strong>Type:</strong> {{ getCourseTypeLabel(selectedCourse.courseType) }}
+                <strong>Type:</strong> {{ getCourseTypeLabel(selectedCourse.course_type) }}
               </div>
             </div>
 
@@ -105,7 +105,7 @@
                 <div v-for="schedule in courseSchedules" :key="schedule.id" class="schedule-item mb-1">
                   <small class="text-muted">
                     <Calendar class="me-1" :size="12" />
-                    {{ getDayName(schedule.dayOfWeek) }}s: {{ formatTime(schedule.startTime) }} - {{ formatTime(schedule.endTime) }}
+                    {{ getDayName(schedule.day_of_week) }}s: {{ formatTime(schedule.start_time) }} - {{ formatTime(schedule.end_time) }}
                   </small>
                 </div>
               </div>
@@ -118,7 +118,7 @@
                 <div v-for="session in oneTimeSessions.slice(0, 3)" :key="session.id" class="session-item mb-1">
                   <small class="text-muted">
                     <Calendar class="me-1" :size="12" />
-                    {{ formatSessionDate(session.sessionDate) }}: {{ formatTime(session.startTime) }} - {{ formatTime(session.endTime) }}
+                    {{ formatSessionDate(session.session_date) }}: {{ formatTime(session.start_time) }} - {{ formatTime(session.end_time) }}
                   </small>
                 </div>
                 <div v-if="oneTimeSessions.length > 3" class="text-muted small">
@@ -183,7 +183,7 @@
               <div v-for="booking in userBookings" :key="booking.id" class="col-md-6 col-lg-4">
                 <div class="booking-card p-3 border rounded">
                   <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="fw-bold mb-0">{{ booking.courseName }}</h6>
+                    <h6 class="fw-bold mb-0">{{ booking.course_name }}</h6>
                     <span class="badge" :class="getStatusBadgeClass(booking.status)">
                       {{ booking.status }}
                     </span>
@@ -191,16 +191,16 @@
                   <div class="booking-details">
                     <div class="detail-item mb-1">
                       <Calendar class="text-muted me-1" :size="14" />
-                      <small>{{ formatBookingDate(booking.startTime) }}</small>
+                      <small>{{ formatBookingDate(booking.start_time) }}</small>
                     </div>
                     <div class="detail-item mb-1">
                       <Clock class="text-muted me-1" :size="14" />
-                      <small>{{ formatBookingTime(booking.startTime) }} - {{ formatBookingTime(booking.endTime) }}</small>
+                      <small>{{ formatBookingTime(booking.start_time) }} - {{ formatBookingTime(booking.end_time) }}</small>
                     </div>
                   </div>
                   <div class="mt-2">
-                    <button 
-                      v-if="booking.status === 'confirmed' && !isPastBooking(booking.startTime)"
+                    <button
+                      v-if="booking.status === 'confirmed' && !isPastBooking(booking.start_time)"
                       class="btn btn-outline-danger btn-sm"
                       @click="cancelBooking(booking.id!)"
                     >
@@ -316,18 +316,18 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { BookOpen, User, Clock, Users, Info, Calendar, Tag, Repeat, ChevronLeft, ChevronRight, X, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
-import { 
-  coursesService, 
-  courseBookingsService, 
+import {
+  coursesService,
+  courseBookingsService,
   courseSchedulesService,
   courseExceptionsService,
   oneTimeSessionsService,
-  type Course, 
-  type CourseBooking, 
+  type Course,
+  type CourseBooking,
   type CourseSchedule,
   type CourseException,
-  type OneTimeCourseSession
-} from '@/services/coursesService'
+  type OneTimeSession
+} from '@/services/supabaseCoursesService'
 
 // FullCalendar imports
 import { Calendar as FullCalendar } from '@fullcalendar/core'
@@ -352,7 +352,7 @@ const courses = ref<Course[]>([])
 const selectedCourse = ref<Course | null>(null)
 const courseSchedules = ref<CourseSchedule[]>([])
 const courseExceptions = ref<CourseException[]>([])
-const oneTimeSessions = ref<OneTimeCourseSession[]>([])
+const oneTimeSessions = ref<OneTimeSession[]>([])
 const userBookings = ref<CourseBooking[]>([])
 const allBookings = ref<CourseBooking[]>([])
 const selectedTimeSlot = ref<{ start: Date; end: Date } | null>(null)
@@ -387,7 +387,7 @@ const initializeCalendar = async () => {
     eventClick: handleEventClick,
     events: [],
     eventColor: '#0066CC',
-    selectConstraint: false, // Allow selection of past dates
+    selectConstraint: 'businessHours',
     selectOverlap: false,
     eventOverlap: false,
     validRange: {
@@ -423,7 +423,7 @@ const selectCourse = async (course: Course) => {
   
   if (course.id) {
     // Load course schedules for weekly/monthly courses
-    if (course.courseType === 'weekly' || course.courseType === 'monthly') {
+    if (course.course_type === 'weekly' || course.course_type === 'monthly') {
       const schedulesResult = await courseSchedulesService.getByCourseId(course.id)
       if (schedulesResult.success) {
         courseSchedules.value = schedulesResult.data || []
@@ -437,7 +437,7 @@ const selectCourse = async (course: Course) => {
     }
 
     // Load one-time sessions for one-time courses
-    if (course.courseType === 'one-time') {
+    if (course.course_type === 'one-time') {
       const sessionsResult = await oneTimeSessionsService.getByCourseId(course.id)
       if (sessionsResult.success) {
         oneTimeSessions.value = sessionsResult.data || []
@@ -460,30 +460,30 @@ const loadCalendarEvents = async () => {
       
       // Filter bookings for selected course
       const courseBookings = allBookings.value.filter(
-        booking => booking.courseId === selectedCourse.value!.id
+        booking => booking.course_id === selectedCourse.value!.id
       )
       
       // Convert bookings to calendar events
       const events = courseBookings.map(booking => {
-        const startDate = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
-        const endDate = booking.endTime instanceof Date ? booking.endTime : booking.endTime.toDate()
+        const startDate = new Date(booking.start_time)
+        const endDate = new Date(booking.end_time)
         const isPast = startDate < new Date()
         
         return {
           id: booking.id,
-          title: `${booking.courseName} (${getBookingCount(booking)} / ${selectedCourse.value!.maxParticipants})`,
+          title: `${booking.course_name} (${getBookingCount(booking)} / ${selectedCourse.value!.max_participants})`,
           start: startDate,
           end: endDate,
-          backgroundColor: booking.userId === authStore.user?.id 
-            ? (isPast ? '#6c757d' : '#28a745') 
+          backgroundColor: booking.user_id === authStore.user?.id
+            ? (isPast ? '#6c757d' : '#28a745')
             : (isPast ? '#adb5bd' : '#6c757d'),
-          borderColor: booking.userId === authStore.user?.id 
-            ? (isPast ? '#6c757d' : '#28a745') 
+          borderColor: booking.user_id === authStore.user?.id
+            ? (isPast ? '#6c757d' : '#28a745')
             : (isPast ? '#adb5bd' : '#6c757d'),
           textColor: isPast ? '#ffffff' : '#ffffff',
           extendedProps: {
             booking: booking,
-            isUserBooking: booking.userId === authStore.user?.id,
+            isUserBooking: booking.user_id === authStore.user?.id,
             isPast: isPast
           }
         }
@@ -529,25 +529,25 @@ const generateAvailableSlots = () => {
   const startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
   const endDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000) // 2 weeks from now
   
-  if (selectedCourse.value.courseType === 'weekly') {
+  if (selectedCourse.value.course_type === 'weekly') {
     // Generate weekly recurring slots
     for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
       const dayOfWeek = date.getDay()
-      
+
       // Find schedules for this day
-      const daySchedules = courseSchedules.value.filter(schedule => schedule.dayOfWeek === dayOfWeek)
-      
+      const daySchedules = courseSchedules.value.filter(schedule => schedule.day_of_week === dayOfWeek)
+
       for (const schedule of daySchedules) {
         const dateStr = date.toISOString().split('T')[0]
-        
+
         // Check if this date is in exceptions
-        const isException = courseExceptions.value.some(exception => 
-          exception.exceptionDate === dateStr
+        const isException = courseExceptions.value.some(exception =>
+          exception.exception_date === dateStr
         )
-        
+
         if (!isException) {
-          const [startHour, startMinute] = schedule.startTime.split(':').map(Number)
-          const [endHour, endMinute] = schedule.endTime.split(':').map(Number)
+          const [startHour, startMinute] = schedule.start_time.split(':').map(Number)
+          const [endHour, endMinute] = schedule.end_time.split(':').map(Number)
           
           const slotStart = new Date(date)
           slotStart.setHours(startHour, startMinute, 0, 0)
@@ -559,15 +559,15 @@ const generateAvailableSlots = () => {
         }
       }
     }
-  } else if (selectedCourse.value.courseType === 'one-time') {
+  } else if (selectedCourse.value.course_type === 'one-time') {
     // Add one-time sessions
     for (const session of oneTimeSessions.value) {
-      const sessionDate = session.sessionDate instanceof Date ? session.sessionDate : session.sessionDate.toDate()
-      
+      const sessionDate = new Date(session.session_date)
+
       // Add sessions within the date range
       if (sessionDate >= startDate && sessionDate <= endDate) {
-        const [startHour, startMinute] = session.startTime.split(':').map(Number)
-        const [endHour, endMinute] = session.endTime.split(':').map(Number)
+        const [startHour, startMinute] = session.start_time.split(':').map(Number)
+        const [endHour, endMinute] = session.end_time.split(':').map(Number)
         
         const slotStart = new Date(sessionDate)
         slotStart.setHours(startHour, startMinute, 0, 0)
@@ -585,12 +585,12 @@ const generateAvailableSlots = () => {
 
 // Get booking count for a specific time slot
 const getBookingCount = (booking: CourseBooking) => {
-  const bookingStart = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
-  
+  const bookingStart = new Date(booking.start_time)
+
   return allBookings.value.filter(b => {
-    if (b.courseId !== selectedCourse.value!.id || b.status !== 'confirmed') return false
-    
-    const bStart = b.startTime instanceof Date ? b.startTime : b.startTime.toDate()
+    if (b.course_id !== selectedCourse.value!.id || b.status !== 'confirmed') return false
+
+    const bStart = new Date(b.start_time)
     const timeDiff = Math.abs(bStart.getTime() - bookingStart.getTime())
     return timeDiff < 30 * 60 * 1000 // Same time slot (within 30 minutes)
   }).length
@@ -599,16 +599,16 @@ const getBookingCount = (booking: CourseBooking) => {
 // Get available spots for a time slot
 const getAvailableSpots = (slot: { start: Date; end: Date }) => {
   if (!selectedCourse.value) return 0
-  
+
   const bookingCount = allBookings.value.filter(booking => {
-    if (booking.courseId !== selectedCourse.value!.id || booking.status !== 'confirmed') return false
-    
-    const bookingStart = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
+    if (booking.course_id !== selectedCourse.value!.id || booking.status !== 'confirmed') return false
+
+    const bookingStart = new Date(booking.start_time)
     const timeDiff = Math.abs(bookingStart.getTime() - slot.start.getTime())
     return timeDiff < 30 * 60 * 1000
   }).length
-  
-  return selectedCourse.value.maxParticipants - bookingCount
+
+  return selectedCourse.value.max_participants - bookingCount
 }
 
 // Handle date selection
@@ -669,14 +669,14 @@ const handleDateSelect = (selectInfo: any) => {
 // Check if time slot is valid for the selected course
 const isValidTimeSlot = (start: Date, end: Date) => {
   if (!selectedCourse.value) return false
-  
-  if (selectedCourse.value.courseType === 'weekly') {
+
+  if (selectedCourse.value.course_type === 'weekly') {
     return courseSchedules.value.some(schedule => {
       const dayOfWeek = start.getDay()
-      if (schedule.dayOfWeek !== dayOfWeek) return false
-      
-      const [scheduleStartHour, scheduleStartMinute] = schedule.startTime.split(':').map(Number)
-      const [scheduleEndHour, scheduleEndMinute] = schedule.endTime.split(':').map(Number)
+      if (schedule.day_of_week !== dayOfWeek) return false
+
+      const [scheduleStartHour, scheduleStartMinute] = schedule.start_time.split(':').map(Number)
+      const [scheduleEndHour, scheduleEndMinute] = schedule.end_time.split(':').map(Number)
       
       const scheduleStart = new Date(start)
       scheduleStart.setHours(scheduleStartHour, scheduleStartMinute, 0, 0)
@@ -686,11 +686,11 @@ const isValidTimeSlot = (start: Date, end: Date) => {
       
       return start.getTime() === scheduleStart.getTime() && end.getTime() === scheduleEnd.getTime()
     })
-  } else if (selectedCourse.value.courseType === 'one-time') {
+  } else if (selectedCourse.value.course_type === 'one-time') {
     return oneTimeSessions.value.some(session => {
-      const sessionDate = session.sessionDate instanceof Date ? session.sessionDate : session.sessionDate.toDate()
-      const [startHour, startMinute] = session.startTime.split(':').map(Number)
-      const [endHour, endMinute] = session.endTime.split(':').map(Number)
+      const sessionDate = new Date(session.session_date)
+      const [startHour, startMinute] = session.start_time.split(':').map(Number)
+      const [endHour, endMinute] = session.end_time.split(':').map(Number)
       
       const sessionStart = new Date(sessionDate)
       sessionStart.setHours(startHour, startMinute, 0, 0)
@@ -708,7 +708,7 @@ const isValidTimeSlot = (start: Date, end: Date) => {
 // Handle event click
 const handleEventClick = (clickInfo: any) => {
   const booking = clickInfo.event.extendedProps.booking
-  if (booking && booking.userId === authStore.user?.id && !clickInfo.event.extendedProps.isPast) {
+  if (booking && booking.user_id === authStore.user?.id && !clickInfo.event.extendedProps.isPast) {
     if (confirm('Do you want to cancel this booking?')) {
       cancelBooking(booking.id)
     }
@@ -718,19 +718,19 @@ const handleEventClick = (clickInfo: any) => {
 // Confirm booking
 const confirmBooking = async () => {
   if (!selectedTimeSlot.value || !selectedCourse.value || !authStore.user) return
-  
+
   bookingInProgress.value = true
-  
+
   try {
     const result = await courseBookingsService.create({
-      courseId: selectedCourse.value.id!,
-      courseName: selectedCourse.value.title,
-      userId: authStore.user.id,
-      userName: authStore.user.displayName,
-      userEmail: authStore.user.email,
-      startTime: selectedTimeSlot.value.start,
-      endTime: selectedTimeSlot.value.end,
-      notes: bookingNotes.value.trim() || undefined
+      course_id: selectedCourse.value.id!,
+      course_name: selectedCourse.value.title,
+      user_id: authStore.user.id,
+      user_name: authStore.user.displayName,
+      user_email: authStore.user.email,
+      start_time: selectedTimeSlot.value.start.toISOString(),
+      end_time: selectedTimeSlot.value.end.toISOString(),
+      notes: bookingNotes.value.trim() || null
     })
     
     if (result.success) {
@@ -802,26 +802,26 @@ const formatTime = (timeString: string) => {
   return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
 }
 
-const formatSessionDate = (dateTime: any) => {
-  const date = dateTime instanceof Date ? dateTime : dateTime.toDate()
-  return date.toLocaleDateString('en-AU', { 
-    month: 'short', 
-    day: 'numeric' 
+const formatSessionDate = (dateTime: string) => {
+  const date = new Date(dateTime)
+  return date.toLocaleDateString('en-AU', {
+    month: 'short',
+    day: 'numeric'
   })
 }
 
-const formatBookingDate = (dateTime: any) => {
-  const date = dateTime instanceof Date ? dateTime : dateTime.toDate()
-  return date.toLocaleDateString('en-AU', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+const formatBookingDate = (dateTime: string) => {
+  const date = new Date(dateTime)
+  return date.toLocaleDateString('en-AU', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   })
 }
 
-const formatBookingTime = (dateTime: any) => {
-  const date = dateTime instanceof Date ? dateTime : dateTime.toDate()
+const formatBookingTime = (dateTime: string) => {
+  const date = new Date(dateTime)
   return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
 }
 
@@ -865,8 +865,8 @@ const getStatusBadgeClass = (status: string) => {
   return classes[status] || 'bg-secondary'
 }
 
-const isPastBooking = (dateTime: any) => {
-  const date = dateTime instanceof Date ? dateTime : dateTime.toDate()
+const isPastBooking = (dateTime: string) => {
+  const date = new Date(dateTime)
   return date < new Date()
 }
 
