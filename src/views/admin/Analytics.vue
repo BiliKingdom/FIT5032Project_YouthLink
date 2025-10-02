@@ -163,17 +163,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import {
-  RefreshCw,
-  AlertCircle,
-  TrendingUp,
-  Users,
-  Calendar,
-  Activity,
-  Layers,
-  BarChart2,
-  PieChart as PieChartIcon
-} from 'lucide-vue-next'
+import { RefreshCw, CircleAlert as AlertCircle, TrendingUp, Users, Calendar, Activity, Layers, ChartBar as BarChart2, ChartPie as PieChartIcon } from 'lucide-vue-next'
 import LineChart from '@/components/charts/LineChart.vue'
 import PieChart from '@/components/charts/PieChart.vue'
 import BarChart from '@/components/charts/BarChart.vue'
