@@ -224,17 +224,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import {
-  RefreshCw,
-  Download,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Calendar,
-  Eye,
-  Check
-} from 'lucide-vue-next'
+import { RefreshCw, Download, CircleAlert as AlertCircle, CircleCheck as CheckCircle, Circle as XCircle, Clock, Calendar, Eye, Check } from 'lucide-vue-next'
 import BaseDataTable from '@/components/tables/BaseDataTable.vue'
 import { useDataTable } from '@/composables/useDataTable'
 import {
