@@ -19,6 +19,7 @@ import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 import CourseManagement from '@/views/admin/CourseManagement.vue'
 import UsersTable from '@/views/admin/UsersTable.vue'
 import AppointmentsTable from '@/views/admin/AppointmentsTable.vue'
+import Analytics from '@/views/admin/Analytics.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -114,6 +115,12 @@ const router = createRouter({
       path: '/admin/appointments',
       name: 'AppointmentsTable',
       component: AppointmentsTable,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/analytics',
+      name: 'Analytics',
+      component: Analytics,
       meta: { requiresAdmin: true }
     }
   ]

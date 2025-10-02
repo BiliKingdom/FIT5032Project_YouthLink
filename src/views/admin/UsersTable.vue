@@ -10,10 +10,11 @@
           <RefreshCw :size="16" class="me-2" :class="{ 'spin': loading }" />
           Refresh
         </button>
-        <button class="btn btn-primary" @click="exportData">
-          <Download :size="16" class="me-2" />
-          Export
-        </button>
+        <ExportButton
+          :disabled="loading || users.length === 0"
+          :is-exporting="exportState.isExporting.value"
+          @export="handleExport"
+        />
       </div>
     </div>
 
@@ -153,11 +154,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { RefreshCw, Download, CircleAlert as AlertCircle, CircleCheck as CheckCircle, Eye, UserX, UserCheck } from 'lucide-vue-next'
+import { RefreshCw, CircleAlert as AlertCircle, CircleCheck as CheckCircle, Eye, UserX, UserCheck } from 'lucide-vue-next'
 import BaseDataTable from '@/components/tables/BaseDataTable.vue'
+import ExportButton from '@/components/export/ExportButton.vue'
 import { useDataTable } from '@/composables/useDataTable'
+import { useDataExport } from '@/composables/useDataExport'
 import { usersTableService, type UserTableData } from '@/services/tables/usersTableService'
 import { useAuthStore } from '@/stores/auth'
+import { formatters } from '@/utils/export/formatters'
 
 const authStore = useAuthStore()
 
@@ -183,6 +187,8 @@ const tableState = useDataTable({
   defaultSortOrder: 'desc',
   rowsPerPage: 10
 })
+
+const exportState = useDataExport()
 
 const loadUsers = async () => {
   loading.value = true
@@ -253,29 +259,32 @@ const viewUserDetails = (user: UserTableData) => {
   modal.show()
 }
 
-const exportData = () => {
-  const csvContent = [
-    ['Name', 'Email', 'Role', 'Status', 'Member Since'],
-    ...tableState.filteredData.value.map(user => [
-      user.displayName,
-      user.email,
-      user.role,
-      user.status,
-      formatDate(user.createdAt)
-    ])
+const handleExport = (format: 'csv' | 'pdf') => {
+  const exportColumns = [
+    { field: 'displayName', header: 'Name' },
+    { field: 'email', header: 'Email' },
+    { field: 'role', header: 'Role', formatter: (v: string) => v.toUpperCase() },
+    { field: 'status', header: 'Status', formatter: (v: string) => v.charAt(0).toUpperCase() + v.slice(1) },
+    { field: 'createdAt', header: 'Member Since', formatter: (v: Date) => formatters.date(v) }
   ]
-    .map(row => row.join(','))
-    .join('\n')
 
-  const blob = new Blob([csvContent], { type: 'text/csv' })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `users-${new Date().toISOString().split('T')[0]}.csv`
-  a.click()
-  window.URL.revokeObjectURL(url)
+  const exportData = tableState.filteredData.value
 
-  successMessage.value = 'Users data exported successfully'
+  if (format === 'csv') {
+    exportState.exportToCSV(exportData, exportColumns, 'users')
+    successMessage.value = 'Users data exported to CSV successfully'
+  } else if (format === 'pdf') {
+    exportState.exportToPDF(
+      exportData,
+      exportColumns,
+      'User Management Report',
+      'users',
+      `Generated on ${new Date().toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+      'landscape'
+    )
+    successMessage.value = 'Users data exported to PDF successfully'
+  }
+
   setTimeout(() => (successMessage.value = ''), 3000)
 }
 

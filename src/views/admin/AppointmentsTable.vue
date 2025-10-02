@@ -10,10 +10,11 @@
           <RefreshCw :size="16" class="me-2" :class="{ 'spin': loading }" />
           Refresh
         </button>
-        <button class="btn btn-primary" @click="exportData">
-          <Download :size="16" class="me-2" />
-          Export
-        </button>
+        <ExportButton
+          :disabled="loading || appointments.length === 0"
+          :is-exporting="exportState.isExporting.value"
+          @export="handleExport"
+        />
       </div>
     </div>
 
@@ -224,13 +225,16 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { RefreshCw, Download, CircleAlert as AlertCircle, CircleCheck as CheckCircle, Circle as XCircle, Clock, Calendar, Eye, Check } from 'lucide-vue-next'
+import { RefreshCw, CircleAlert as AlertCircle, CircleCheck as CheckCircle, Circle as XCircle, Clock, Calendar, Eye, Check } from 'lucide-vue-next'
 import BaseDataTable from '@/components/tables/BaseDataTable.vue'
+import ExportButton from '@/components/export/ExportButton.vue'
 import { useDataTable } from '@/composables/useDataTable'
+import { useDataExport } from '@/composables/useDataExport'
 import {
   appointmentsTableService,
   type AppointmentTableData
 } from '@/services/tables/appointmentsTableService'
+import { formatters } from '@/utils/export/formatters'
 
 const appointments = ref<AppointmentTableData[]>([])
 const loading = ref(false)
@@ -259,6 +263,8 @@ const tableState = useDataTable({
   defaultSortOrder: 'desc',
   rowsPerPage: 10
 })
+
+const exportState = useDataExport()
 
 const loadAppointments = async () => {
   loading.value = true
@@ -317,31 +323,34 @@ const viewDetails = (appointment: AppointmentTableData) => {
   modal.show()
 }
 
-const exportData = () => {
-  const csvContent = [
-    ['Service Type', 'Date', 'Time', 'Urgency', 'Status', 'Reason', 'Booked On'],
-    ...tableState.filteredData.value.map(appt => [
-      appt.serviceType,
-      appt.preferredDate,
-      appt.preferredTime,
-      appt.urgency,
-      appt.status,
-      appt.reason.replace(/,/g, ';'),
-      formatDate(appt.createdAt)
-    ])
+const handleExport = (format: 'csv' | 'pdf') => {
+  const exportColumns = [
+    { field: 'serviceType', header: 'Service Type' },
+    { field: 'preferredDate', header: 'Date' },
+    { field: 'preferredTime', header: 'Time' },
+    { field: 'urgency', header: 'Urgency', formatter: (v: string) => v.toUpperCase() },
+    { field: 'status', header: 'Status', formatter: (v: string) => v.charAt(0).toUpperCase() + v.slice(1) },
+    { field: 'reason', header: 'Reason', formatter: (v: string) => v.substring(0, 100) },
+    { field: 'createdAt', header: 'Booked On', formatter: (v: Date) => formatters.datetime(v) }
   ]
-    .map(row => row.join(','))
-    .join('\n')
 
-  const blob = new Blob([csvContent], { type: 'text/csv' })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `appointments-${new Date().toISOString().split('T')[0]}.csv`
-  a.click()
-  window.URL.revokeObjectURL(url)
+  const exportData = tableState.filteredData.value
 
-  successMessage.value = 'Appointments data exported successfully'
+  if (format === 'csv') {
+    exportState.exportToCSV(exportData, exportColumns, 'appointments')
+    successMessage.value = 'Appointments data exported to CSV successfully'
+  } else if (format === 'pdf') {
+    exportState.exportToPDF(
+      exportData,
+      exportColumns,
+      'Appointments Management Report',
+      'appointments',
+      `Total: ${exportData.length} appointments | Generated: ${new Date().toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+      'landscape'
+    )
+    successMessage.value = 'Appointments data exported to PDF successfully'
+  }
+
   setTimeout(() => (successMessage.value = ''), 3000)
 }
 

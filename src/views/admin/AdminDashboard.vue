@@ -174,16 +174,16 @@
                 </router-link>
               </div>
               <div class="col-6">
-                <router-link to="/admin/courses" class="btn btn-outline-warning w-100">
-                  <BookOpen class="mb-2" :size="20" />
-                  <div>Course Management</div>
+                <router-link to="/admin/analytics" class="btn btn-outline-warning w-100">
+                  <BarChart class="mb-2" :size="20" />
+                  <div>Analytics</div>
                 </router-link>
               </div>
               <div class="col-6">
-                <button class="btn btn-outline-info w-100">
-                  <Mail class="mb-2" :size="20" />
-                  <div>Send Bulk Email</div>
-                </button>
+                <router-link to="/admin/courses" class="btn btn-outline-info w-100">
+                  <BookOpen class="mb-2" :size="20" />
+                  <div>Course Management</div>
+                </router-link>
               </div>
             </div>
           </div>
