@@ -218,10 +218,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { 
-  Users, Calendar, BookOpen, Star, TrendingUp, BarChart, Activity, 
-  Zap, Mail, Shield, Download, Plus, AlertCircle
-} from 'lucide-vue-next'
+import { Users, Calendar, BookOpen, Star, TrendingUp, ChartBar as BarChart, Activity, Zap, Mail, Shield, Download, Plus, CircleAlert as AlertCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { appointmentsService, contactService, userService } from '@/services/firestore'
 import { initializeDatabase, checkDatabaseStatus } from '@/services/initializeDatabase'
