@@ -460,11 +460,16 @@ const loadResource = async () => {
 }
 
 const loadComments = async () => {
-  if (!resource.value?.id) return
-  
+  if (!resource.value?.id) {
+    console.log('loadComments: No resource ID available')
+    return
+  }
+
+  console.log('Loading comments for resource:', resource.value.id)
   const result = await resourceCommentsService.getResourceComments(resource.value.id)
-  
+
   if (result.success) {
+    console.log('Comments loaded successfully:', result.data?.length || 0, 'comments')
     comments.value = result.data || []
   } else {
     console.error('Failed to load comments:', result.error)
@@ -624,10 +629,14 @@ const showToast = (message: string, type: 'success' | 'error') => {
   }
 }
 
-onMounted(() => {
-  loadResource()
-  loadComments()
-  loadUserComment()
+onMounted(async () => {
+  await loadResource()
+  if (resource.value?.id) {
+    await Promise.all([
+      loadComments(),
+      loadUserComment()
+    ])
+  }
 })
 </script>
 

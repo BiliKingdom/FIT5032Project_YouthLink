@@ -249,27 +249,22 @@ export const resourceCommentsService = {
   // Get comments for a resource
   async getResourceComments(resourceId: string) {
     try {
-      const querySnapshot = await getDocs(collection(db, 'resource_comments'))
+      const q = query(
+        collection(db, 'resource_comments'),
+        where('resourceId', '==', resourceId),
+        where('reported', '==', false),
+        orderBy('createdAt', 'desc')
+      )
+      const querySnapshot = await getDocs(q)
       const comments: ResourceComment[] = []
-      
+
       querySnapshot.forEach((doc) => {
-        const data = doc.data() as ResourceComment
-        // Filter by resourceId and exclude reported comments
-        if (data.resourceId === resourceId && !data.reported) {
-          comments.push({
-            id: doc.id,
-            ...data
-          } as ResourceComment)
-        }
+        comments.push({
+          id: doc.id,
+          ...doc.data()
+        } as ResourceComment)
       })
-      
-      // Sort by createdAt descending on client side
-      comments.sort((a, b) => {
-        const dateA = (a.createdAt as any)?.toDate ? (a.createdAt as any).toDate() : new Date(a.createdAt as any)
-        const dateB = (b.createdAt as any)?.toDate ? (b.createdAt as any).toDate() : new Date(b.createdAt as any)
-        return dateB.getTime() - dateA.getTime()
-      })
-      
+
       return { success: true, data: comments }
     } catch (error) {
       console.error('Error fetching resource comments:', error)
@@ -280,19 +275,23 @@ export const resourceCommentsService = {
   // Get user's comment for a specific resource
   async getUserComment(resourceId: string, userId: string) {
     try {
-      const querySnapshot = await getDocs(collection(db, 'resource_comments'))
+      const q = query(
+        collection(db, 'resource_comments'),
+        where('resourceId', '==', resourceId),
+        where('userId', '==', userId),
+        where('reported', '==', false),
+        limit(1)
+      )
+      const querySnapshot = await getDocs(q)
       let userComment: ResourceComment | null = null
-      
+
       querySnapshot.forEach((doc) => {
-        const data = doc.data() as ResourceComment
-        if (data.resourceId === resourceId && data.userId === userId && !data.reported) {
-          userComment = {
-            id: doc.id,
-            ...data
-          } as ResourceComment
-        }
+        userComment = {
+          id: doc.id,
+          ...doc.data()
+        } as ResourceComment
       })
-      
+
       return { success: true, data: userComment }
     } catch (error) {
       console.error('Error fetching user comment:', error)
