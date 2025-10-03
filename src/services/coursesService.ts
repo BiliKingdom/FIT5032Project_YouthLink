@@ -200,11 +200,11 @@ export const courseBookingsService = {
       if (!capacityCheck.success) {
         return capacityCheck
       }
-      
-      if (capacityCheck.isFull) {
-        return { 
-          success: false, 
-          error: 'This time slot is fully booked. Please choose another time.' 
+
+      if ('isFull' in capacityCheck && capacityCheck.isFull) {
+        return {
+          success: false,
+          error: 'This time slot is fully booked. Please choose another time.'
         }
       }
       
