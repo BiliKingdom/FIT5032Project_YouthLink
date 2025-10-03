@@ -469,18 +469,18 @@ const saveCourse = async () => {
     }
     
     if (result?.success) {
-      const courseId = ('id' in result ? result.id : undefined) || courses.value.find(c =>
-        c.title === courseForm.value.title &&
+      const courseId = result.id || courses.value.find(c => 
+        c.title === courseForm.value.title && 
         c.instructor === courseForm.value.instructor
       )?.id
       
-      if (courseId && typeof courseId === 'string') {
+      if (courseId) {
         // Save schedules/sessions
         if (courseForm.value.courseType === 'weekly') {
           for (const schedule of weeklySchedules.value) {
             if (schedule.startTime && schedule.endTime) {
               await courseSchedulesService.create({
-                courseId: courseId,
+                courseId,
                 dayOfWeek: schedule.dayOfWeek,
                 startTime: schedule.startTime,
                 endTime: schedule.endTime,
@@ -492,7 +492,7 @@ const saveCourse = async () => {
           for (const session of oneTimeSessions.value) {
             if (session.sessionDate && session.startTime && session.endTime) {
               await oneTimeSessionsService.create({
-                courseId: courseId,
+                courseId,
                 sessionDate: new Date(session.sessionDate),
                 startTime: session.startTime,
                 endTime: session.endTime,

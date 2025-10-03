@@ -162,11 +162,7 @@
             </div>
           </div>
           <div class="card-body p-0">
-            <div v-if="!selectedCourse" class="text-center py-5">
-              <Calendar class="text-muted mb-3" :size="48" />
-              <p class="text-muted">Please select a course from the list to view available time slots</p>
-            </div>
-            <div v-else id="calendar" ref="calendarEl"></div>
+            <div id="calendar" ref="calendarEl"></div>
           </div>
         </div>
       </div>
@@ -424,18 +420,13 @@ const loadCourses = async () => {
 // Select course
 const selectCourse = async (course: Course) => {
   selectedCourse.value = course
-  console.log('Selected course:', course)
-
+  
   if (course.id) {
     // Load course schedules for weekly/monthly courses
     if (course.courseType === 'weekly' || course.courseType === 'monthly') {
       const schedulesResult = await courseSchedulesService.getByCourseId(course.id)
       if (schedulesResult.success) {
         courseSchedules.value = schedulesResult.data || []
-        console.log('Loaded course schedules:', courseSchedules.value.length)
-        if (courseSchedules.value.length === 0) {
-          showToast('This course has no scheduled sessions yet. Please contact an administrator.', 'error')
-        }
       }
 
       // Load course exceptions
@@ -450,14 +441,10 @@ const selectCourse = async (course: Course) => {
       const sessionsResult = await oneTimeSessionsService.getByCourseId(course.id)
       if (sessionsResult.success) {
         oneTimeSessions.value = sessionsResult.data || []
-        console.log('Loaded one-time sessions:', oneTimeSessions.value.length)
-        if (oneTimeSessions.value.length === 0) {
-          showToast('This course has no scheduled sessions yet. Please contact an administrator.', 'error')
-        }
       }
     }
   }
-
+  
   await loadCalendarEvents()
 }
 
@@ -536,13 +523,11 @@ const loadCalendarEvents = async () => {
 // Generate available time slots
 const generateAvailableSlots = () => {
   if (!selectedCourse.value) return []
-
-  console.log('Generating slots for course type:', selectedCourse.value.courseType)
   
   const slots = []
   const today = new Date()
   const startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
-  const endDate = new Date(today.getTime() + 180 * 24 * 60 * 60 * 1000) // 6 months from now
+  const endDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000) // 2 weeks from now
   
   if (selectedCourse.value.courseType === 'weekly') {
     // Generate weekly recurring slots
@@ -594,8 +579,7 @@ const generateAvailableSlots = () => {
       }
     }
   }
-
-  console.log('Generated', slots.length, 'available time slots')
+  
   return slots
 }
 
@@ -645,6 +629,15 @@ const handleDateSelect = (selectInfo: any) => {
   // Check if this is a past date
   if (start < new Date()) {
     showToast('Cannot book past sessions', 'error')
+    calendarApi.value?.unselect()
+    return
+  }
+  
+  // Check if this is within 2 weeks
+  const twoWeeksFromNow = new Date()
+  twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14)
+  if (start > twoWeeksFromNow) {
+    showToast('Can only book sessions within 2 weeks', 'error')
     calendarApi.value?.unselect()
     return
   }
@@ -754,7 +747,7 @@ const confirmBooking = async () => {
       await loadUserBookings()
       await loadCalendarEvents()
     } else {
-      showToast('error' in result && result.error ? result.error : 'Failed to book course', 'error')
+      showToast(result.error || 'Failed to book course', 'error')
     }
   } catch (error) {
     console.error('Error booking course:', error)
