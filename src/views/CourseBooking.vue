@@ -588,11 +588,31 @@ const handleEventClick = (clickInfo: any) => {
 
 // Confirm booking
 const confirmBooking = async () => {
-  if (!selectedTimeSlot.value || !selectedCourse.value || !authStore.user || !selectedTimeSlot.value.instanceId) return
+  if (!selectedTimeSlot.value || !selectedCourse.value || !authStore.user || !selectedTimeSlot.value.instanceId) {
+    console.error('Missing required data for booking:', {
+      hasTimeSlot: !!selectedTimeSlot.value,
+      hasCourse: !!selectedCourse.value,
+      hasUser: !!authStore.user,
+      hasInstanceId: !!selectedTimeSlot.value?.instanceId
+    })
+    showToast('Missing required booking information', 'error')
+    return
+  }
 
   bookingInProgress.value = true
 
   try {
+    console.log('Creating booking with data:', {
+      courseId: selectedCourse.value.id,
+      courseInstanceId: selectedTimeSlot.value.instanceId,
+      courseName: selectedCourse.value.title,
+      userId: authStore.user.id,
+      userName: authStore.user.displayName,
+      userEmail: authStore.user.email,
+      startTime: selectedTimeSlot.value.start,
+      endTime: selectedTimeSlot.value.end
+    })
+
     const result = await courseBookingsService.create({
       courseId: selectedCourse.value.id!,
       courseInstanceId: selectedTimeSlot.value.instanceId,
@@ -605,6 +625,8 @@ const confirmBooking = async () => {
       status: 'confirmed',
       notes: bookingNotes.value.trim() || undefined
     })
+
+    console.log('Booking result:', result)
 
     if (result.success) {
       await courseInstancesService.incrementBookingCount(selectedTimeSlot.value.instanceId)
@@ -619,11 +641,13 @@ const confirmBooking = async () => {
       await loadUserBookings()
       await loadCalendarEvents()
     } else {
-      showToast(('error' in result ? result.error : undefined) || 'Failed to book course', 'error')
+      const errorMessage = ('error' in result ? result.error : undefined) || 'Failed to book course'
+      console.error('Booking failed:', errorMessage)
+      showToast(errorMessage, 'error')
     }
   } catch (error) {
     console.error('Error booking course:', error)
-    showToast('Error booking course', 'error')
+    showToast(`Error booking course: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
   } finally {
     bookingInProgress.value = false
   }

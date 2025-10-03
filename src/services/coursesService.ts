@@ -180,15 +180,15 @@ export const courseBookingsService = {
         bookingData.startTime,
         bookingData.endTime
       )
-      
+
       if (!conflictCheck.success) {
-        return conflictCheck
+        return { success: false, error: conflictCheck.error || 'Failed to check conflicts' }
       }
-      
-      if (conflictCheck.hasConflict) {
-        return { 
-          success: false, 
-          error: 'You already have a booking at this time. Please choose a different time slot.' 
+
+      if ('hasConflict' in conflictCheck && conflictCheck.hasConflict) {
+        return {
+          success: false,
+          error: 'You already have a booking at this time. Please choose a different time slot.'
         }
       }
       
@@ -202,7 +202,7 @@ export const courseBookingsService = {
         return { success: false, error: capacityCheck.error || 'Failed to check capacity' }
       }
 
-      if (capacityCheck.isFull) {
+      if ('isFull' in capacityCheck && capacityCheck.isFull) {
         return {
           success: false,
           error: 'This time slot is fully booked. Please choose another time.'
