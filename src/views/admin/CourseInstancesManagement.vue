@@ -113,7 +113,15 @@
                         :style="{ width: getBookingPercentage(instance) + '%' }"
                       ></div>
                     </div>
-                    <small>{{ instance.currentBookings }} / {{ instance.maxParticipants }}</small>
+                    <small>
+                      <a
+                        href="#"
+                        @click.prevent="viewBookings(instance)"
+                        class="text-decoration-none"
+                      >
+                        {{ instance.currentBookings }} / {{ instance.maxParticipants }}
+                      </a>
+                    </small>
                   </div>
                 </td>
                 <td>
@@ -175,12 +183,75 @@
       </div>
     </div>
   </div>
+
+  <!-- Bookings Modal -->
+  <div class="modal fade" id="bookingsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Course Bookings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div v-if="selectedInstance">
+            <h6 class="fw-bold">{{ selectedInstance.courseName }}</h6>
+            <p class="text-muted mb-3">
+              {{ formatDate(selectedInstance.startTime) }} at {{ formatTime(selectedInstance.startTime) }}
+            </p>
+
+            <div v-if="loadingBookings" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+
+            <div v-else-if="instanceBookings.length === 0" class="text-center py-4 text-muted">
+              No bookings yet for this session
+            </div>
+
+            <div v-else class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>User Name</th>
+                    <th>Email</th>
+                    <th>Booked At</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="booking in instanceBookings" :key="booking.id">
+                    <td>{{ booking.userName }}</td>
+                    <td>{{ booking.userEmail }}</td>
+                    <td>{{ formatBookingTime(booking.createdAt) }}</td>
+                    <td>
+                      <span class="badge" :class="booking.status === 'confirmed' ? 'bg-success' : 'bg-secondary'">
+                        {{ booking.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <small>{{ booking.notes || '-' }}</small>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { RefreshCw, Search, Calendar, X } from 'lucide-vue-next'
 import { courseInstancesService, type CourseInstance } from '@/services/courseInstancesService'
+import { courseBookingsService, type CourseBooking } from '@/services/coursesService'
 import { scheduledTasksService } from '@/services/scheduledTasksService'
 import { Timestamp } from 'firebase/firestore'
 
@@ -189,6 +260,9 @@ const loading = ref(false)
 const refreshing = ref(false)
 const searchQuery = ref('')
 const taskLogs = ref(scheduledTasksService.getRecentLogs())
+const selectedInstance = ref<CourseInstance | null>(null)
+const instanceBookings = ref<CourseBooking[]>([])
+const loadingBookings = ref(false)
 
 const totalInstances = computed(() => instances.value.length)
 const availableInstances = computed(() =>
@@ -246,6 +320,28 @@ const refreshInstances = async () => {
   }
 }
 
+const viewBookings = async (instance: CourseInstance) => {
+  selectedInstance.value = instance
+  loadingBookings.value = true
+  instanceBookings.value = []
+
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('bookingsModal'))
+  modal.show()
+
+  try {
+    const result = await courseBookingsService.getAllBookings()
+    if (result.success) {
+      instanceBookings.value = (result.data || []).filter(
+        booking => booking.courseInstanceId === instance.id && booking.status === 'confirmed'
+      )
+    }
+  } catch (error) {
+    console.error('Error loading bookings:', error)
+  } finally {
+    loadingBookings.value = false
+  }
+}
+
 const cancelInstance = async (instance: CourseInstance) => {
   if (!instance.id) return
 
@@ -294,6 +390,16 @@ const formatTime = (dateTime: any) => {
 
 const formatLogTime = (timestamp: Date) => {
   return timestamp.toLocaleString('en-AU', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const formatBookingTime = (dateTime: any) => {
+  const date = dateTime instanceof Timestamp ? dateTime.toDate() : new Date(dateTime)
+  return date.toLocaleString('en-AU', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',

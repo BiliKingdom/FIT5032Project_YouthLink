@@ -384,17 +384,12 @@ const initializeCalendar = async () => {
       startTime: '09:00',
       endTime: '18:00'
     },
-    selectable: true,
-    selectMirror: true,
-    select: handleDateSelect,
+    selectable: false,
     eventClick: handleEventClick,
     events: [],
     eventColor: '#0066CC',
-    selectConstraint: 'businessHours',
-    selectOverlap: false,
-    eventOverlap: false,
     validRange: {
-      start: new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()) // Show past dates
+      start: new Date(today.getFullYear() - 1, today.getMonth(), today.getDate())
     }
   })
 
@@ -513,13 +508,14 @@ const loadCalendarEvents = async () => {
           backgroundColor: backgroundColor,
           borderColor: borderColor,
           textColor: textColor,
-          display: 'background',
+          classNames: ['course-instance-event'],
           extendedProps: {
             instance: instance,
             isAvailable: !isPast && !isFull && !isBeyondTwoWeeks,
             availableSpots: availableSpots,
             isPast: isPast,
-            isFull: isFull
+            isFull: isFull,
+            isInstanceEvent: true
           }
         }
       })
@@ -556,69 +552,34 @@ const loadCalendarEvents = async () => {
   }
 }
 
-// Find course instance by time
-const findInstanceByTime = (start: Date): CourseInstance | null => {
-  return courseInstances.value.find(instance => {
-    const instanceStart = instance.startTime instanceof Date ? instance.startTime : instance.startTime.toDate()
-    return Math.abs(instanceStart.getTime() - start.getTime()) < 60000
-  }) || null
-}
-
-// Handle date selection
-const handleDateSelect = (selectInfo: any) => {
-  if (!authStore.isLoggedIn) {
-    showToast('Please log in to book courses', 'error')
-    return
-  }
-  
-  if (!selectedCourse.value) {
-    showToast('Please select a course first', 'error')
-    return
-  }
-  
-  const start = selectInfo.start
-  const end = selectInfo.end
-  
-  // Check if this is a past date
-  if (start < new Date()) {
-    showToast('Cannot book past sessions', 'error')
-    calendarApi.value?.unselect()
-    return
-  }
-  
-  // Find the corresponding course instance
-  const instance = findInstanceByTime(start)
-  if (!instance) {
-    showToast('No course instance available for this time slot', 'error')
-    calendarApi.value?.unselect()
-    return
-  }
-
-  // Check if instance is available
-  if (instance.status === 'full' || instance.currentBookings >= instance.maxParticipants) {
-    showToast('This course instance is fully booked', 'error')
-    calendarApi.value?.unselect()
-    return
-  }
-
-  if (instance.status === 'cancelled') {
-    showToast('This course instance has been cancelled', 'error')
-    calendarApi.value?.unselect()
-    return
-  }
-
-  selectedTimeSlot.value = { start, end, instanceId: instance.id }
-  const modal = new (window as any).bootstrap.Modal(document.getElementById('bookingModal'))
-  modal.show()
-  
-  calendarApi.value?.unselect()
-}
-
-
 // Handle event click
 const handleEventClick = (clickInfo: any) => {
-  const booking = clickInfo.event.extendedProps.booking
-  if (booking && booking.userId === authStore.user?.id && !clickInfo.event.extendedProps.isPast) {
+  const { isInstanceEvent, instance, booking, isPast, isAvailable } = clickInfo.event.extendedProps
+
+  if (isInstanceEvent && instance) {
+    // Clicked on a course instance
+    if (!authStore.isLoggedIn) {
+      showToast('Please log in to book courses', 'error')
+      return
+    }
+
+    if (!isAvailable) {
+      if (isPast) {
+        showToast('Cannot book past sessions', 'error')
+      } else {
+        showToast('This session is not available for booking', 'error')
+      }
+      return
+    }
+
+    // Open booking modal
+    const startDate = instance.startTime instanceof Date ? instance.startTime : instance.startTime.toDate()
+    const endDate = instance.endTime instanceof Date ? instance.endTime : instance.endTime.toDate()
+    selectedTimeSlot.value = { start: startDate, end: endDate, instanceId: instance.id }
+    const modal = new (window as any).bootstrap.Modal(document.getElementById('bookingModal'))
+    modal.show()
+  } else if (booking && booking.userId === authStore.user?.id && !isPast) {
+    // Clicked on user's own booking
     if (confirm('Do you want to cancel this booking?')) {
       cancelBooking(booking.id)
     }
@@ -888,5 +849,14 @@ onUnmounted(() => {
 
 :deep(.fc-select-mirror) {
   background-color: rgba(var(--bs-success-rgb), 0.3);
+}
+
+:deep(.course-instance-event) {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+:deep(.course-instance-event:hover) {
+  opacity: 0.8;
 }
 </style>
