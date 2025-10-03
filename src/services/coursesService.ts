@@ -34,6 +34,7 @@ export interface Course {
 export interface CourseBooking {
   id?: string
   courseId: string
+  courseInstanceId?: string
   courseName: string
   userId: string
   userName: string
@@ -196,15 +197,15 @@ export const courseBookingsService = {
         bookingData.courseId,
         bookingData.startTime
       )
-      
+
       if (!capacityCheck.success) {
-        return capacityCheck
+        return { success: false, error: capacityCheck.error || 'Failed to check capacity' }
       }
-      
+
       if (capacityCheck.isFull) {
-        return { 
-          success: false, 
-          error: 'This time slot is fully booked. Please choose another time.' 
+        return {
+          success: false,
+          error: 'This time slot is fully booked. Please choose another time.'
         }
       }
       
@@ -259,7 +260,7 @@ export const courseBookingsService = {
       // Get course details
       const courseResult = await coursesService.getById(courseId)
       if (!courseResult.success) {
-        return courseResult
+        return { success: false, error: courseResult.error || 'Failed to get course' }
       }
       
       const course = courseResult.data!

@@ -18,6 +18,7 @@ import Register from '@/views/auth/Register.vue'
 import Profile from '@/views/Profile.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 import CourseManagement from '@/views/admin/CourseManagement.vue'
+import CourseInstancesManagement from '@/views/admin/CourseInstancesManagement.vue'
 import UsersTable from '@/views/admin/UsersTable.vue'
 import AppointmentsTable from '@/views/admin/AppointmentsTable.vue'
 import Analytics from '@/views/admin/Analytics.vue'
@@ -109,6 +110,12 @@ const router = createRouter({
       path: '/admin/courses',
       name: 'CourseManagement',
       component: CourseManagement,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/course-instances',
+      name: 'CourseInstancesManagement',
+      component: CourseInstancesManagement,
       meta: { requiresAdmin: true }
     },
     {

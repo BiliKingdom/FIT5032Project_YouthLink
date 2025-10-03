@@ -168,6 +168,12 @@
                 </router-link>
               </div>
               <div class="col-6">
+                <router-link to="/admin/course-instances" class="btn btn-outline-info w-100">
+                  <Calendar class="mb-2" :size="20" />
+                  <div>Course Instances</div>
+                </router-link>
+              </div>
+              <div class="col-6">
                 <router-link to="/admin/appointments" class="btn btn-outline-success w-100">
                   <Calendar class="mb-2" :size="20" />
                   <div>Appointments</div>

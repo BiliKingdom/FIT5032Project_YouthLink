@@ -328,6 +328,8 @@ import {
   type CourseException,
   type OneTimeCourseSession
 } from '@/services/coursesService'
+import { courseInstancesService, type CourseInstance } from '@/services/courseInstancesService'
+import { scheduledTasksService } from '@/services/scheduledTasksService'
 
 // FullCalendar imports
 import { Calendar as FullCalendar } from '@fullcalendar/core'
@@ -355,7 +357,8 @@ const courseExceptions = ref<CourseException[]>([])
 const oneTimeSessions = ref<OneTimeCourseSession[]>([])
 const userBookings = ref<CourseBooking[]>([])
 const allBookings = ref<CourseBooking[]>([])
-const selectedTimeSlot = ref<{ start: Date; end: Date } | null>(null)
+const courseInstances = ref<CourseInstance[]>([])
+const selectedTimeSlot = ref<{ start: Date; end: Date; instanceId?: string } | null>(null)
 
 // Calendar initialization
 const initializeCalendar = async () => {
@@ -453,162 +456,112 @@ const loadCalendarEvents = async () => {
   if (!calendarApi.value || !selectedCourse.value) return
 
   try {
-    // Load all bookings for this course
+    // Load course instances for this course
+    const instancesResult = await courseInstancesService.getInstancesByCourse(selectedCourse.value.id!, 14)
+    if (instancesResult.success) {
+      courseInstances.value = instancesResult.data || []
+    }
+
+    // Load all bookings
     const result = await courseBookingsService.getAllBookings()
     if (result.success) {
       allBookings.value = result.data || []
-      
+
       // Filter bookings for selected course
       const courseBookings = allBookings.value.filter(
         booking => booking.courseId === selectedCourse.value!.id
       )
 
-      // Convert bookings to calendar events
-      const events = courseBookings.map(booking => {
-        const startDate = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
-        const endDate = booking.endTime instanceof Date ? booking.endTime : booking.endTime.toDate()
+      // Create events from course instances
+      const instanceEvents = courseInstances.value.map(instance => {
+        const startDate = instance.startTime instanceof Date ? instance.startTime : instance.startTime.toDate()
+        const endDate = instance.endTime instanceof Date ? instance.endTime : instance.endTime.toDate()
         const isPast = startDate < new Date()
-        
+        const now = new Date()
+        const twoWeeksFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
+        const isBeyondTwoWeeks = startDate > twoWeeksFromNow
+        const availableSpots = instance.maxParticipants - instance.currentBookings
+        const isFull = availableSpots <= 0
+
+        let backgroundColor = '#d1e7ff'
+        let borderColor = '#0d6efd'
+        let textColor = '#084298'
+        let title = `Available (${availableSpots} / ${instance.maxParticipants})`
+
+        if (isPast) {
+          backgroundColor = '#f8f9fa'
+          borderColor = '#dee2e6'
+          textColor = '#6c757d'
+          title = 'Past Session'
+        } else if (isFull) {
+          backgroundColor = '#f8d7da'
+          borderColor = '#dc3545'
+          textColor = '#842029'
+          title = 'Fully Booked'
+        } else if (isBeyondTwoWeeks) {
+          backgroundColor = '#e9ecef'
+          borderColor = '#adb5bd'
+          textColor = '#6c757d'
+          title = `Not Yet Available (${availableSpots} spots)`
+        }
+
         return {
-          id: booking.id,
-          title: `${booking.courseName} (${getBookingCount(booking)} / ${selectedCourse.value!.maxParticipants})`,
+          id: `instance-${instance.id}`,
+          title: title,
           start: startDate,
           end: endDate,
-          backgroundColor: booking.userId === authStore.user?.id
-            ? (isPast ? '#6c757d' : '#28a745')
-            : (isPast ? '#adb5bd' : '#6c757d'),
-          borderColor: booking.userId === authStore.user?.id
-            ? (isPast ? '#6c757d' : '#28a745')
-            : (isPast ? '#adb5bd' : '#6c757d'),
-          textColor: isPast ? '#ffffff' : '#ffffff',
-          extendedProps: {
-            booking: booking,
-            isUserBooking: booking.userId === authStore.user?.id,
-            isPast: isPast
-          }
-        }
-      })
-      
-      // Generate available time slots
-      const availableSlots = generateAvailableSlots()
-      
-      // Add available slots as selectable events
-      const slotEvents = availableSlots.map(slot => {
-        const isPast = slot.start < new Date()
-        return {
-          id: `slot-${slot.start.getTime()}`,
-          title: isPast ? 'Past Session' : `Available (${getAvailableSpots(slot)} spots)`,
-          start: slot.start,
-          end: slot.end,
-          backgroundColor: isPast ? '#f8f9fa' : '#e9ecef',
-          borderColor: isPast ? '#dee2e6' : '#dee2e6',
-          textColor: isPast ? '#6c757d' : '#495057',
+          backgroundColor: backgroundColor,
+          borderColor: borderColor,
+          textColor: textColor,
           display: 'background',
           extendedProps: {
-            isAvailable: !isPast,
-            availableSpots: getAvailableSpots(slot),
-            isPast: isPast
+            instance: instance,
+            isAvailable: !isPast && !isFull && !isBeyondTwoWeeks,
+            availableSpots: availableSpots,
+            isPast: isPast,
+            isFull: isFull
           }
         }
       })
-      
+
+      // Create events for user bookings
+      const bookingEvents = courseBookings
+        .filter(booking => booking.userId === authStore.user?.id)
+        .map(booking => {
+          const startDate = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
+          const endDate = booking.endTime instanceof Date ? booking.endTime : booking.endTime.toDate()
+          const isPast = startDate < new Date()
+
+          return {
+            id: `booking-${booking.id}`,
+            title: `My Booking: ${booking.courseName}`,
+            start: startDate,
+            end: endDate,
+            backgroundColor: isPast ? '#6c757d' : '#28a745',
+            borderColor: isPast ? '#6c757d' : '#28a745',
+            textColor: '#ffffff',
+            extendedProps: {
+              booking: booking,
+              isUserBooking: true,
+              isPast: isPast
+            }
+          }
+        })
+
       calendarApi.value.removeAllEvents()
-      calendarApi.value.addEventSource([...events, ...slotEvents])
+      calendarApi.value.addEventSource([...instanceEvents, ...bookingEvents])
     }
   } catch (error) {
     console.error('Error loading calendar events:', error)
   }
 }
 
-// Generate available time slots
-const generateAvailableSlots = () => {
-  if (!selectedCourse.value) return []
-  
-  const slots = []
-  const today = new Date()
-  const startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
-  const endDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000) // 2 weeks from now
-  
-  if (selectedCourse.value.courseType === 'weekly') {
-    // Generate weekly recurring slots
-    for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-      const dayOfWeek = date.getDay()
-
-      // Find schedules for this day
-      const daySchedules = courseSchedules.value.filter(schedule => schedule.dayOfWeek === dayOfWeek)
-
-      for (const schedule of daySchedules) {
-        const dateStr = date.toISOString().split('T')[0]
-
-        // Check if this date is in exceptions
-        const isException = courseExceptions.value.some(exception =>
-          exception.exceptionDate === dateStr
-        )
-
-        if (!isException) {
-          const [startHour, startMinute] = schedule.startTime.split(':').map(Number)
-          const [endHour, endMinute] = schedule.endTime.split(':').map(Number)
-          
-          const slotStart = new Date(date)
-          slotStart.setHours(startHour, startMinute, 0, 0)
-          
-          const slotEnd = new Date(date)
-          slotEnd.setHours(endHour, endMinute, 0, 0)
-          
-          slots.push({ start: new Date(slotStart), end: new Date(slotEnd) })
-        }
-      }
-    }
-  } else if (selectedCourse.value.courseType === 'one-time') {
-    // Add one-time sessions
-    for (const session of oneTimeSessions.value) {
-      const sessionDate = session.sessionDate instanceof Date ? session.sessionDate : session.sessionDate.toDate()
-
-      // Add sessions within the date range
-      if (sessionDate >= startDate && sessionDate <= endDate) {
-        const [startHour, startMinute] = session.startTime.split(':').map(Number)
-        const [endHour, endMinute] = session.endTime.split(':').map(Number)
-        
-        const slotStart = new Date(sessionDate)
-        slotStart.setHours(startHour, startMinute, 0, 0)
-        
-        const slotEnd = new Date(sessionDate)
-        slotEnd.setHours(endHour, endMinute, 0, 0)
-        
-        slots.push({ start: slotStart, end: slotEnd })
-      }
-    }
-  }
-  
-  return slots
-}
-
-// Get booking count for a specific time slot
-const getBookingCount = (booking: CourseBooking) => {
-  const bookingStart = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
-
-  return allBookings.value.filter(b => {
-    if (b.courseId !== selectedCourse.value!.id || b.status !== 'confirmed') return false
-
-    const bStart = b.startTime instanceof Date ? b.startTime : b.startTime.toDate()
-    const timeDiff = Math.abs(bStart.getTime() - bookingStart.getTime())
-    return timeDiff < 30 * 60 * 1000 // Same time slot (within 30 minutes)
-  }).length
-}
-
-// Get available spots for a time slot
-const getAvailableSpots = (slot: { start: Date; end: Date }) => {
-  if (!selectedCourse.value) return 0
-
-  const bookingCount = allBookings.value.filter(booking => {
-    if (booking.courseId !== selectedCourse.value!.id || booking.status !== 'confirmed') return false
-
-    const bookingStart = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
-    const timeDiff = Math.abs(bookingStart.getTime() - slot.start.getTime())
-    return timeDiff < 30 * 60 * 1000
-  }).length
-
-  return selectedCourse.value.maxParticipants - bookingCount
+// Find course instance by time
+const findInstanceByTime = (start: Date): CourseInstance | null => {
+  return courseInstances.value.find(instance => {
+    const instanceStart = instance.startTime instanceof Date ? instance.startTime : instance.startTime.toDate()
+    return Math.abs(instanceStart.getTime() - start.getTime()) < 60000
+  }) || null
 }
 
 // Handle date selection
@@ -633,77 +586,34 @@ const handleDateSelect = (selectInfo: any) => {
     return
   }
   
-  // Check if this is within 2 weeks
-  const twoWeeksFromNow = new Date()
-  twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14)
-  if (start > twoWeeksFromNow) {
-    showToast('Can only book sessions within 2 weeks', 'error')
+  // Find the corresponding course instance
+  const instance = findInstanceByTime(start)
+  if (!instance) {
+    showToast('No course instance available for this time slot', 'error')
     calendarApi.value?.unselect()
     return
   }
-  
-  // Check if this is a valid time slot
-  const isValidSlot = isValidTimeSlot(start, end)
-  
-  if (!isValidSlot) {
-    showToast('Please select a valid time slot for this course', 'error')
+
+  // Check if instance is available
+  if (instance.status === 'full' || instance.currentBookings >= instance.maxParticipants) {
+    showToast('This course instance is fully booked', 'error')
     calendarApi.value?.unselect()
     return
   }
-  
-  // Check if slot is available
-  const availableSpots = getAvailableSpots({ start, end })
-  if (availableSpots <= 0) {
-    showToast('This time slot is fully booked', 'error')
+
+  if (instance.status === 'cancelled') {
+    showToast('This course instance has been cancelled', 'error')
     calendarApi.value?.unselect()
     return
   }
-  
-  selectedTimeSlot.value = { start, end }
+
+  selectedTimeSlot.value = { start, end, instanceId: instance.id }
   const modal = new (window as any).bootstrap.Modal(document.getElementById('bookingModal'))
   modal.show()
   
   calendarApi.value?.unselect()
 }
 
-// Check if time slot is valid for the selected course
-const isValidTimeSlot = (start: Date, end: Date) => {
-  if (!selectedCourse.value) return false
-
-  if (selectedCourse.value.courseType === 'weekly') {
-    return courseSchedules.value.some(schedule => {
-      const dayOfWeek = start.getDay()
-      if (schedule.dayOfWeek !== dayOfWeek) return false
-
-      const [scheduleStartHour, scheduleStartMinute] = schedule.startTime.split(':').map(Number)
-      const [scheduleEndHour, scheduleEndMinute] = schedule.endTime.split(':').map(Number)
-      
-      const scheduleStart = new Date(start)
-      scheduleStart.setHours(scheduleStartHour, scheduleStartMinute, 0, 0)
-      
-      const scheduleEnd = new Date(start)
-      scheduleEnd.setHours(scheduleEndHour, scheduleEndMinute, 0, 0)
-      
-      return start.getTime() === scheduleStart.getTime() && end.getTime() === scheduleEnd.getTime()
-    })
-  } else if (selectedCourse.value.courseType === 'one-time') {
-    return oneTimeSessions.value.some(session => {
-      const sessionDate = session.sessionDate instanceof Date ? session.sessionDate : session.sessionDate.toDate()
-      const [startHour, startMinute] = session.startTime.split(':').map(Number)
-      const [endHour, endMinute] = session.endTime.split(':').map(Number)
-      
-      const sessionStart = new Date(sessionDate)
-      sessionStart.setHours(startHour, startMinute, 0, 0)
-      
-      const sessionEnd = new Date(sessionDate)
-      sessionEnd.setHours(endHour, endMinute, 0, 0)
-      
-      return start.getTime() === sessionStart.getTime() && end.getTime() === sessionEnd.getTime()
-    })
-  }
-  
-  return false
-}
 
 // Handle event click
 const handleEventClick = (clickInfo: any) => {
@@ -717,13 +627,14 @@ const handleEventClick = (clickInfo: any) => {
 
 // Confirm booking
 const confirmBooking = async () => {
-  if (!selectedTimeSlot.value || !selectedCourse.value || !authStore.user) return
+  if (!selectedTimeSlot.value || !selectedCourse.value || !authStore.user || !selectedTimeSlot.value.instanceId) return
 
   bookingInProgress.value = true
 
   try {
     const result = await courseBookingsService.create({
       courseId: selectedCourse.value.id!,
+      courseInstanceId: selectedTimeSlot.value.instanceId,
       courseName: selectedCourse.value.title,
       userId: authStore.user.id,
       userName: authStore.user.displayName,
@@ -733,21 +644,21 @@ const confirmBooking = async () => {
       status: 'confirmed',
       notes: bookingNotes.value.trim() || undefined
     })
-    
+
     if (result.success) {
+      await courseInstancesService.incrementBookingCount(selectedTimeSlot.value.instanceId)
+
       showToast('Course booked successfully!', 'success')
       const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('bookingModal'))
       modal.hide()
-      
-      // Reset form
+
       selectedTimeSlot.value = null
       bookingNotes.value = ''
-      
-      // Reload data
+
       await loadUserBookings()
       await loadCalendarEvents()
     } else {
-      showToast(result.error || 'Failed to book course', 'error')
+      showToast(('error' in result ? result.error : undefined) || 'Failed to book course', 'error')
     }
   } catch (error) {
     console.error('Error booking course:', error)
@@ -774,10 +685,17 @@ const loadUserBookings = async () => {
 // Cancel booking
 const cancelBooking = async (bookingId: string) => {
   if (!confirm('Are you sure you want to cancel this booking?')) return
-  
+
   try {
+    const booking = userBookings.value.find(b => b.id === bookingId)
+    const instanceId = booking?.courseInstanceId
+
     const result = await courseBookingsService.cancel(bookingId)
     if (result.success) {
+      if (instanceId) {
+        await courseInstancesService.decrementBookingCount(instanceId)
+      }
+
       showToast('Booking cancelled successfully', 'success')
       await loadUserBookings()
       await loadCalendarEvents()
@@ -884,6 +802,7 @@ const showToast = (message: string, type: 'success' | 'error') => {
 
 // Lifecycle
 onMounted(async () => {
+  await scheduledTasksService.initializeInstances()
   await loadCourses()
   await loadUserBookings()
   await initializeCalendar()
