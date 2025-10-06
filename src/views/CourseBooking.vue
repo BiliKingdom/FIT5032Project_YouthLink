@@ -448,24 +448,50 @@ const selectCourse = async (course: Course) => {
 
 // Load calendar events
 const loadCalendarEvents = async () => {
-  if (!calendarApi.value || !selectedCourse.value) return
+  if (!calendarApi.value) return
 
   try {
-    // Load course instances for this course
-    const instancesResult = await courseInstancesService.getInstancesByCourse(selectedCourse.value.id!, 14)
-    if (instancesResult.success) {
-      courseInstances.value = instancesResult.data || []
-    }
+    const allEvents: any[] = []
 
-    // Load all bookings
+    // Always load user's bookings
     const result = await courseBookingsService.getAllBookings()
     if (result.success) {
       allBookings.value = result.data || []
 
-      // Filter bookings for selected course
-      const courseBookings = allBookings.value.filter(
-        booking => booking.courseId === selectedCourse.value!.id
-      )
+      // Create events for all user bookings (not just selected course)
+      const userBookingEvents = allBookings.value
+        .filter(booking => booking.userId === authStore.user?.id)
+        .map(booking => {
+          const startDate = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
+          const endDate = booking.endTime instanceof Date ? booking.endTime : booking.endTime.toDate()
+          const isPast = startDate < new Date()
+
+          return {
+            id: `booking-${booking.id}`,
+            title: `My Booking: ${booking.courseName}`,
+            start: startDate,
+            end: endDate,
+            backgroundColor: isPast ? '#6c757d' : '#28a745',
+            borderColor: isPast ? '#6c757d' : '#28a745',
+            textColor: '#ffffff',
+            extendedProps: {
+              booking: booking,
+              isUserBooking: true,
+              isPast: isPast
+            }
+          }
+        })
+
+      allEvents.push(...userBookingEvents)
+    }
+
+    // If a course is selected, show available time slots for that course
+    if (selectedCourse.value) {
+      // Load course instances for this course
+      const instancesResult = await courseInstancesService.getInstancesByCourse(selectedCourse.value.id!, 14)
+      if (instancesResult.success) {
+        courseInstances.value = instancesResult.data || []
+      }
 
       // Create events from course instances
       const instanceEvents = courseInstances.value.map(instance => {
@@ -520,33 +546,12 @@ const loadCalendarEvents = async () => {
         }
       })
 
-      // Create events for user bookings
-      const bookingEvents = courseBookings
-        .filter(booking => booking.userId === authStore.user?.id)
-        .map(booking => {
-          const startDate = booking.startTime instanceof Date ? booking.startTime : booking.startTime.toDate()
-          const endDate = booking.endTime instanceof Date ? booking.endTime : booking.endTime.toDate()
-          const isPast = startDate < new Date()
-
-          return {
-            id: `booking-${booking.id}`,
-            title: `My Booking: ${booking.courseName}`,
-            start: startDate,
-            end: endDate,
-            backgroundColor: isPast ? '#6c757d' : '#28a745',
-            borderColor: isPast ? '#6c757d' : '#28a745',
-            textColor: '#ffffff',
-            extendedProps: {
-              booking: booking,
-              isUserBooking: true,
-              isPast: isPast
-            }
-          }
-        })
-
-      calendarApi.value.removeAllEvents()
-      calendarApi.value.addEventSource([...instanceEvents, ...bookingEvents])
+      allEvents.push(...instanceEvents)
     }
+
+    // Update calendar with all events (user bookings + selected course instances)
+    calendarApi.value.removeAllEvents()
+    calendarApi.value.addEventSource(allEvents)
   } catch (error) {
     console.error('Error loading calendar events:', error)
   }
