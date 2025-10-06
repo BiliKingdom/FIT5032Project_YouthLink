@@ -275,23 +275,29 @@ export const resourceCommentsService = {
   // Get user's comment for a specific resource
   async getUserComment(resourceId: string, userId: string) {
     try {
+      console.log('getUserComment called with resourceId:', resourceId, 'userId:', userId)
+
       const q = query(
         collection(db, 'resource_comments'),
         where('resourceId', '==', resourceId),
         where('userId', '==', userId),
-        where('reported', '==', false),
         limit(1)
       )
       const querySnapshot = await getDocs(q)
       let userComment: ResourceComment | null = null
 
       querySnapshot.forEach((doc) => {
-        userComment = {
-          id: doc.id,
-          ...doc.data()
-        } as ResourceComment
+        const data = doc.data() as ResourceComment
+        // Only return if not reported
+        if (!data.reported) {
+          userComment = {
+            id: doc.id,
+            ...data
+          }
+        }
       })
 
+      console.log('getUserComment found:', userComment ? `Yes (id: ${(userComment as any).id})` : 'No')
       return { success: true, data: userComment }
     } catch (error) {
       console.error('Error fetching user comment:', error)

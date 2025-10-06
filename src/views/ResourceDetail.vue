@@ -478,12 +478,15 @@ const loadComments = async () => {
 
 const loadUserComment = async () => {
   if (!resource.value?.id || !authStore.user) return
-  
+
+  console.log('Loading user comment for user:', authStore.user.id, 'resource:', resource.value.id)
   const result = await resourceCommentsService.getUserComment(resource.value.id, authStore.user.id)
 
   if (result.success) {
+    console.log('User comment result:', result.data)
     userComment.value = result.data ?? null
     if (userComment.value) {
+      console.log('User has existing comment:', (userComment.value as any).id)
       // Pre-fill form with existing comment data
       const comment = userComment.value as any
       newComment.value = {
@@ -492,7 +495,11 @@ const loadUserComment = async () => {
         comment: comment.comment
       }
       isEditingComment.value = true
+    } else {
+      console.log('User has no existing comment')
     }
+  } else {
+    console.error('Failed to load user comment:', result.error)
   }
 }
 
