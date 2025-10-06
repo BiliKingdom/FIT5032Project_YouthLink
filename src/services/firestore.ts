@@ -249,22 +249,42 @@ export const resourceCommentsService = {
   // Get comments for a resource
   async getResourceComments(resourceId: string) {
     try {
+      console.log('=== Fetching comments for resource:', resourceId)
+
+      // Simplified query without multiple where clauses to avoid index requirements
       const q = query(
         collection(db, 'resource_comments'),
-        where('resourceId', '==', resourceId),
-        where('reported', '==', false),
-        orderBy('createdAt', 'desc')
+        where('resourceId', '==', resourceId)
       )
       const querySnapshot = await getDocs(q)
       const comments: ResourceComment[] = []
 
+      console.log('Raw query results:', querySnapshot.size, 'documents')
+
       querySnapshot.forEach((doc) => {
-        comments.push({
-          id: doc.id,
-          ...doc.data()
-        } as ResourceComment)
+        const data = doc.data() as ResourceComment
+        console.log('Comment doc:', doc.id, 'reported:', data.reported)
+        // Filter out reported comments and sort client-side
+        if (!data.reported) {
+          comments.push({
+            id: doc.id,
+            ...data
+          })
+        }
       })
 
+      // Sort by createdAt descending (newest first)
+      comments.sort((a, b) => {
+        const aTime = a.createdAt && typeof (a.createdAt as any).toDate === 'function'
+          ? (a.createdAt as any).toDate().getTime()
+          : 0
+        const bTime = b.createdAt && typeof (b.createdAt as any).toDate === 'function'
+          ? (b.createdAt as any).toDate().getTime()
+          : 0
+        return bTime - aTime
+      })
+
+      console.log('Final comments to display:', comments.length)
       return { success: true, data: comments }
     } catch (error) {
       console.error('Error fetching resource comments:', error)
