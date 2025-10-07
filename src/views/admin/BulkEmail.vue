@@ -155,7 +155,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Mail, Send, Users, CheckCircle, AlertCircle } from 'lucide-vue-next'
+import { Mail, Send, Users, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-vue-next'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { emailService } from '@/services/emailService'
