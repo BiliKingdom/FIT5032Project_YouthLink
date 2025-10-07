@@ -6,6 +6,13 @@ const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
 
 if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
   console.error('EmailJS configuration is missing. Please check your .env file.')
+  console.error('Current config:', { SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY: PUBLIC_KEY ? 'set' : 'missing' })
+} else {
+  console.log('EmailJS initialized with config:', {
+    SERVICE_ID,
+    TEMPLATE_ID,
+    PUBLIC_KEY: PUBLIC_KEY.substring(0, 8) + '...'
+  })
 }
 
 emailjs.init(PUBLIC_KEY)
