@@ -330,6 +330,7 @@ import {
 } from '@/services/coursesService'
 import { courseInstancesService, type CourseInstance } from '@/services/courseInstancesService'
 import { scheduledTasksService } from '@/services/scheduledTasksService'
+import { emailService } from '@/services/emailService'
 
 // FullCalendar imports
 import { Calendar as FullCalendar } from '@fullcalendar/core'
@@ -636,7 +637,39 @@ const confirmBooking = async () => {
     if (result.success) {
       await courseInstancesService.incrementBookingCount(selectedTimeSlot.value.instanceId)
 
-      showToast('Course booked successfully!', 'success')
+      const startDate = selectedTimeSlot.value.start
+      const endDate = selectedTimeSlot.value.end
+      const dateStr = startDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+      const timeStr = `${startDate.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+      })} - ${endDate.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+      })}`
+
+      emailService.sendBookingConfirmation({
+        to_email: authStore.user.email,
+        to_name: authStore.user.displayName,
+        course_name: selectedCourse.value.title,
+        booking_date: dateStr,
+        booking_time: timeStr,
+        instructor: selectedCourse.value.instructor,
+        duration: `${selectedCourse.value.duration} minutes`
+      }).then(emailResult => {
+        if (emailResult.success) {
+          console.log('Confirmation email sent successfully')
+        } else {
+          console.error('Failed to send confirmation email:', emailResult.error)
+        }
+      })
+
+      showToast('Course booked successfully! Check your email for confirmation.', 'success')
       const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('bookingModal'))
       modal.hide()
 

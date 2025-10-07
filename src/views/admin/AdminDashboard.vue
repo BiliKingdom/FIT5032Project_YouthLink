@@ -191,6 +191,12 @@
                   <div>Course Management</div>
                 </router-link>
               </div>
+              <div class="col-6">
+                <router-link to="/admin/bulk-email" class="btn btn-outline-danger w-100">
+                  <Mail class="mb-2" :size="20" />
+                  <div>Bulk Email</div>
+                </router-link>
+              </div>
             </div>
           </div>
         </div>

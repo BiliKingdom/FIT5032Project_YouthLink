@@ -22,6 +22,7 @@ import CourseInstancesManagement from '@/views/admin/CourseInstancesManagement.v
 import UsersTable from '@/views/admin/UsersTable.vue'
 import AppointmentsTable from '@/views/admin/AppointmentsTable.vue'
 import Analytics from '@/views/admin/Analytics.vue'
+import BulkEmail from '@/views/admin/BulkEmail.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -134,6 +135,12 @@ const router = createRouter({
       path: '/admin/analytics',
       name: 'Analytics',
       component: Analytics,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/bulk-email',
+      name: 'BulkEmail',
+      component: BulkEmail,
       meta: { requiresAdmin: true }
     }
   ]

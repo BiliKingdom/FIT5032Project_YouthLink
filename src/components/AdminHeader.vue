@@ -144,7 +144,7 @@ const navigateToReports = () => console.log('Navigate to reports')
 const navigateToSettings = () => console.log('Navigate to settings')
 
 // Quick actions
-const sendBulkEmail = () => console.log('Send bulk email')
+const sendBulkEmail = () => router.push('/admin/bulk-email')
 const createEvent = () => console.log('Create event')
 const addResource = () => console.log('Add resource')
 const exportData = () => console.log('Export data')
