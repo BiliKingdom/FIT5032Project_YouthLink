@@ -1,8 +1,12 @@
 import emailjs from '@emailjs/browser'
 
-const SERVICE_ID = 'service_ky1fzlt'
-const TEMPLATE_ID = 'template_kba0mkb'
-const PUBLIC_KEY = 'zXsYcTogkvV_BnVDTkXdw'
+const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
+const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+
+if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
+  console.error('EmailJS configuration is missing. Please check your .env file.')
+}
 
 emailjs.init(PUBLIC_KEY)
 
