@@ -97,6 +97,18 @@
                 #{{ tag }}
               </span>
             </div>
+
+            <div class="mt-4 d-flex justify-content-between align-items-center">
+              <div></div>
+              <button
+                v-if="resource.type === 'Article'"
+                class="btn btn-success"
+                @click="downloadAsPDF"
+              >
+                <Download class="me-2" :size="16" />
+                Download as PDF
+              </button>
+            </div>
           </div>
         </div>
 
@@ -407,14 +419,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Star, User, Calendar, MessageSquare, Plus, ThumbsUp, Flag, ArrowLeft, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Eye, Target } from 'lucide-vue-next'
+import { Star, User, Calendar, MessageSquare, Plus, ThumbsUp, Flag, ArrowLeft, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Eye, Target, Download } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
-import { 
-  resourcesService, 
-  resourceCommentsService, 
-  type Resource, 
-  type ResourceComment 
+import {
+  resourcesService,
+  resourceCommentsService,
+  type Resource,
+  type ResourceComment
 } from '@/services/firestore'
+import { articlePdfService } from '@/services/export/articlePdfService'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -628,11 +641,50 @@ const getCategoryBadgeClass = (category: string) => {
 const showToast = (message: string, type: 'success' | 'error') => {
   toastMessage.value = message
   toastType.value = type
-  
+
   const toastElement = document.getElementById('commentToast')
   if (toastElement) {
     const toast = new (window as any).bootstrap.Toast(toastElement)
     toast.show()
+  }
+}
+
+const downloadAsPDF = () => {
+  if (!resource.value) return
+
+  try {
+    let publishedDate: string | undefined
+
+    if (resource.value.publishedDate) {
+      if (typeof resource.value.publishedDate === 'string') {
+        publishedDate = resource.value.publishedDate
+      } else if (resource.value.publishedDate instanceof Date) {
+        publishedDate = resource.value.publishedDate.toLocaleDateString('en-AU', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      } else if (typeof (resource.value.publishedDate as any).toDate === 'function') {
+        publishedDate = (resource.value.publishedDate as any).toDate().toLocaleDateString('en-AU', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      }
+    }
+
+    articlePdfService.generatePDF({
+      title: resource.value.title,
+      author: resource.value.author || 'Unknown Author',
+      content: resource.value.content || '',
+      publishedDate: publishedDate,
+      category: resource.value.category
+    })
+
+    showToast('PDF downloaded successfully!', 'success')
+  } catch (error) {
+    console.error('Error generating PDF:', error)
+    showToast('Failed to generate PDF', 'error')
   }
 }
 

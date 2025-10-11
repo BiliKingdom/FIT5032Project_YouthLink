@@ -166,6 +166,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { BookOpen, Search, ChevronUp, ChevronDown, Star, Eye, Download, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { articlePdfService } from '@/services/export/articlePdfService'
 
 interface Resource {
   id: number
@@ -285,8 +286,36 @@ const getCategoryBadgeClass = (category: string) => {
   return classes[category] || 'bg-secondary'
 }
 
-const downloadResource = (resource: Resource) => {
-  console.log('Downloading resource:', resource.title)
+const downloadResource = async (resource: any) => {
+  try {
+    if (resource.type !== 'Article') {
+      showToast('PDF download is currently only available for articles', 'error')
+      return
+    }
+
+    const publishedDate = resource.publishedDate
+      ? (typeof resource.publishedDate === 'string'
+          ? resource.publishedDate
+          : resource.publishedDate.toDate?.().toLocaleDateString('en-AU', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }))
+      : undefined
+
+    articlePdfService.generatePDF({
+      title: resource.title,
+      author: resource.author || 'Unknown Author',
+      content: resource.content || resource.description || '',
+      publishedDate: publishedDate,
+      category: resource.category
+    })
+
+    showToast('PDF downloaded successfully!', 'success')
+  } catch (error) {
+    console.error('Error generating PDF:', error)
+    showToast('Failed to generate PDF', 'error')
+  }
 }
 
 const showToast = (message: string, type: 'success' | 'error') => {
