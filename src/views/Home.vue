@@ -17,9 +17,9 @@
                 <MapPin class="me-2" :size="20" />
                 Find Services
               </router-link>
-              <router-link to="/info" class="btn btn-outline-light btn-lg">
-                <BookOpen class="me-2" :size="20" />
-                Learn More
+              <router-link to="/ai-support" class="btn btn-outline-light btn-lg">
+                <MessageCircle class="me-2" :size="20" />
+                AI Mental Health Support
               </router-link>
             </div>
           </div>
@@ -92,12 +92,12 @@
                 <div class="feature-icon bg-primary bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
                   <Brain class="text-primary" :size="32" />
                 </div>
-                <h5 class="card-title">Mental Health Resources</h5>
+                <h5 class="card-title">AI Mental Health Support</h5>
                 <p class="card-text text-muted">
-                  Access comprehensive information about anxiety, depression, stress management, and wellness strategies.
+                  Chat with our AI assistant for instant support with anxiety, stress, and other mental health concerns. Available 24/7.
                 </p>
-                <router-link to="/info" class="btn btn-outline-primary">
-                  Explore Topics
+                <router-link to="/ai-support" class="btn btn-outline-primary">
+                  Start Chatting
                 </router-link>
               </div>
             </div>

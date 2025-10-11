@@ -25,16 +25,11 @@
           <li class="nav-item">
             <router-link to="/" class="nav-link">Home</router-link>
           </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              Mental Health Info
-            </a>
-            <ul class="dropdown-menu">
-              <li><router-link to="/info" class="dropdown-item">All Topics</router-link></li>
-              <li><router-link to="/info/anxiety" class="dropdown-item">Anxiety</router-link></li>
-              <li><router-link to="/info/depression" class="dropdown-item">Depression</router-link></li>
-              <li><router-link to="/info/stress" class="dropdown-item">Stress Management</router-link></li>
-            </ul>
+          <li class="nav-item">
+            <router-link to="/ai-support" class="nav-link">
+              <Sparkles :size="16" class="me-1" style="display: inline;" />
+              AI Mental Health Support
+            </router-link>
           </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -100,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { Heart, User, LogOut } from 'lucide-vue-next'
+import { Heart, User, LogOut, Sparkles } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
