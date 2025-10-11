@@ -28,7 +28,7 @@
           <li class="nav-item">
             <router-link to="/ai-support" class="nav-link">
               <Sparkles :size="16" class="me-1" style="display: inline;" />
-              AI Mental Health Support
+              AI Support
             </router-link>
           </li>
           <li class="nav-item dropdown">
