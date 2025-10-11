@@ -44,6 +44,37 @@
           </div>
           <div class="card-body p-0">
             <div id="map" style="height: 500px; width: 100%;" ref="mapContainer"></div>
+            <div v-if="routeInfo && showingRoute" class="route-info-overlay">
+              <div class="route-info-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="mb-0 fw-bold">Route Information</h6>
+                  <button class="btn-close btn-sm" @click="clearRoute" aria-label="Close"></button>
+                </div>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <div class="text-center p-2 bg-light rounded">
+                      <div class="text-muted small">Distance</div>
+                      <div class="fw-bold">{{ routeInfo.distance.toFixed(1) }} km</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="text-center p-2 bg-light rounded">
+                      <div class="text-muted small">Est. Time</div>
+                      <div class="fw-bold">{{ Math.ceil(routeInfo.duration) }} min</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <a
+                    :href="getGoogleMapsUrl()"
+                    target="_blank"
+                    class="btn btn-primary btn-sm w-100"
+                  >
+                    Open in Google Maps
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -154,6 +185,13 @@
                   <div v-if="service.distance !== undefined" class="text-end">
                     <span class="badge bg-success">{{ service.distance.toFixed(1) }} km</span>
                   </div>
+                </div>
+
+                <div v-if="userLocation" class="mt-2">
+                  <button class="btn btn-outline-primary btn-sm w-100" @click.stop="showRoute(service)">
+                    <Navigation class="me-1" :size="12" />
+                    Get Directions
+                  </button>
                 </div>
                 
                 <div class="d-flex flex-wrap gap-1 mb-2">
@@ -270,6 +308,13 @@
                 <Navigation class="me-2 text-primary" :size="16" />
                 <strong>Distance:</strong> {{ selectedService.distance.toFixed(1) }} km from your location
               </div>
+              <div v-if="userLocation" class="mb-2">
+                <button class="btn btn-primary btn-sm" @click="showRoute(selectedService)" :disabled="loadingRoute">
+                  <Navigation class="me-1" :size="14" />
+                  <span v-if="loadingRoute">Loading Route...</span>
+                  <span v-else>Get Directions</span>
+                </button>
+              </div>
             </div>
             
             <div class="col-12">
@@ -298,7 +343,14 @@
           </div>
         </div>
         <div class="modal-footer">
+          <button v-if="showingRoute && selectedService" type="button" class="btn btn-outline-warning" @click="clearRoute">
+            Clear Route
+          </button>
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button v-if="userLocation && selectedService" class="btn btn-success" @click="showRoute(selectedService)" :disabled="loadingRoute">
+            <Navigation class="me-1" :size="16" />
+            Get Directions
+          </button>
           <a v-if="selectedService" :href="`tel:${selectedService.phone}`" class="btn btn-primary">
             <Phone class="me-1" :size="16" />
             Call Now
@@ -334,6 +386,8 @@ const mapContainer = ref<HTMLElement>()
 const map = ref<L.Map>()
 const userMarker = ref<L.Marker>()
 const serviceMarkers = ref<L.Marker[]>([])
+const routePolyline = ref<L.Polyline | null>(null)
+const routeInfo = ref<{ distance: number; duration: number } | null>(null)
 
 const searchLocation = ref('')
 const selectedServiceType = ref('')
@@ -347,6 +401,8 @@ const locationPermissionDenied = ref(false)
 const services = ref<ServiceLocation[]>([])
 const userLocation = ref<Coordinates | null>(null)
 const selectedService = ref<ServiceLocation | null>(null)
+const showingRoute = ref(false)
+const loadingRoute = ref(false)
 
 const filteredServices = computed(() => {
   let filtered = [...services.value]
@@ -585,6 +641,109 @@ const getServiceTypeBadge = (type: string) => {
   return badges[type] || 'bg-secondary'
 }
 
+const showRoute = async (service: ServiceLocation) => {
+  if (!userLocation.value || !map.value) return
+
+  loadingRoute.value = true
+
+  try {
+    // Clear existing route
+    clearRoute()
+
+    // Create route using OSRM (Open Source Routing Machine)
+    const start = `${userLocation.value.lng},${userLocation.value.lat}`
+    const end = `${service.coordinates.lng},${service.coordinates.lat}`
+    const url = `https://router.project-osrm.org/route/v1/driving/${start};${end}?overview=full&geometries=geojson`
+
+    const response = await fetch(url)
+    const data = await response.json()
+
+    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+      const route = data.routes[0]
+      const coordinates: [number, number][] = route.geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]] as [number, number])
+
+      // Draw route on map
+      routePolyline.value = L.polyline(coordinates, {
+        color: '#007bff',
+        weight: 4,
+        opacity: 0.7
+      }).addTo(map.value!)
+
+      // Calculate route info
+      routeInfo.value = {
+        distance: route.distance / 1000, // Convert meters to km
+        duration: route.duration / 60 // Convert seconds to minutes
+      }
+
+      showingRoute.value = true
+
+      // Fit map to show entire route
+      const bounds = L.latLngBounds([
+        [userLocation.value.lat, userLocation.value.lng],
+        [service.coordinates.lat, service.coordinates.lng]
+      ])
+      map.value.fitBounds(bounds, { padding: [50, 50] })
+
+    } else {
+      // Fallback to straight line if routing fails
+      drawStraightLine(service)
+    }
+  } catch (error) {
+    console.error('Error fetching route:', error)
+    // Fallback to straight line
+    drawStraightLine(service)
+  } finally {
+    loadingRoute.value = false
+  }
+}
+
+const drawStraightLine = (service: ServiceLocation) => {
+  if (!userLocation.value || !map.value) return
+
+  const coordinates: [number, number][] = [
+    [userLocation.value.lat, userLocation.value.lng],
+    [service.coordinates.lat, service.coordinates.lng]
+  ]
+
+  routePolyline.value = L.polyline(coordinates, {
+    color: '#ffc107',
+    weight: 3,
+    opacity: 0.7,
+    dashArray: '10, 10'
+  }).addTo(map.value!)
+
+  // Calculate straight-line distance and estimated time
+  const distance = calculateDistance(userLocation.value, service.coordinates)
+  routeInfo.value = {
+    distance: distance,
+    duration: (distance / 50) * 60 // Rough estimate: 50 km/h average speed
+  }
+
+  showingRoute.value = true
+
+  // Fit map to show entire route
+  const bounds = L.latLngBounds(coordinates)
+  map.value.fitBounds(bounds, { padding: [50, 50] })
+}
+
+const clearRoute = () => {
+  if (routePolyline.value && map.value) {
+    routePolyline.value.remove()
+    routePolyline.value = null
+  }
+  routeInfo.value = null
+  showingRoute.value = false
+}
+
+const getGoogleMapsUrl = () => {
+  if (!userLocation.value || !selectedService.value) return '#'
+
+  const origin = `${userLocation.value.lat},${userLocation.value.lng}`
+  const destination = `${selectedService.value.coordinates.lat},${selectedService.value.coordinates.lng}`
+
+  return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`
+}
+
 // Make showServiceDetails available globally for popup buttons
 ;(window as any).showServiceDetails = (serviceId: string) => {
   const service = services.value.find(s => s.id === serviceId)
@@ -698,5 +857,26 @@ onUnmounted(() => {
 
 .services-list::-webkit-scrollbar-thumb:hover {
   background-color: #adb5bd;
+}
+
+.route-info-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  max-width: 280px;
+}
+
+.route-info-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #dee2e6;
+}
+
+.route-info-card .btn-close {
+  padding: 0.25rem;
+  font-size: 0.75rem;
 }
 </style>
