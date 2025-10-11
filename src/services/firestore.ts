@@ -146,23 +146,33 @@ export const appointmentsService = {
   // Get all appointments (admin only)
   async getAll() {
     try {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
+      )
+
       const q = query(
         collection(db, 'appointments'),
         orderBy('createdAt', 'desc')
       )
-      const querySnapshot = await getDocs(q)
+      const fetchPromise = getDocs(q)
+
+      const querySnapshot = await Promise.race([fetchPromise, timeoutPromise]) as any
       const appointments: Appointment[] = []
-      
-      querySnapshot.forEach((doc) => {
+
+      querySnapshot.forEach((doc: any) => {
         appointments.push({
           id: doc.id,
           ...doc.data()
         } as Appointment)
       })
-      
+
       return { success: true, data: appointments }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching all appointments:', error)
+      if (error.message === 'Request timeout') {
+        return { success: false, error: 'Request timed out. Please check your internet connection and try again.' }
+      }
       return { success: false, error: 'Failed to fetch appointments' }
     }
   }
@@ -651,19 +661,29 @@ export const userService = {
   // Get all users (admin only)
   async getAll() {
     try {
-      const querySnapshot = await getDocs(collection(db, 'users'))
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
+      )
+
+      const fetchPromise = getDocs(collection(db, 'users'))
+
+      const querySnapshot = await Promise.race([fetchPromise, timeoutPromise]) as any
       const users: any[] = []
-      
-      querySnapshot.forEach((doc) => {
+
+      querySnapshot.forEach((doc: any) => {
         users.push({
           id: doc.id,
           ...doc.data()
         })
       })
-      
+
       return { success: true, data: users }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching users:', error)
+      if (error.message === 'Request timeout') {
+        return { success: false, error: 'Request timed out. Please check your internet connection and try again.' }
+      }
       return { success: false, error: 'Failed to fetch users' }
     }
   }

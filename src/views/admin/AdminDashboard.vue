@@ -114,12 +114,22 @@
             </h5>
           </div>
           <div class="card-body">
-            <div class="chart-placeholder bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
-              <div class="text-center">
-                <BarChart class="text-muted mb-3" :size="48" />
-                <h5 class="text-muted">Chart Integration Coming Soon</h5>
-                <p class="text-muted">Chart.js integration will be implemented in the next phase</p>
-              </div>
+            <div v-if="chartLoading" class="text-center py-5">
+              <div class="spinner-border text-primary"></div>
+              <p class="text-muted mt-2">Loading chart data...</p>
+            </div>
+            <LineChart
+              v-else-if="userTrendLabels.length > 0"
+              :labels="userTrendLabels"
+              :data="userTrendData"
+              label="New Users"
+              border-color="#0066CC"
+              background-color="rgba(0, 102, 204, 0.1)"
+              :fill="true"
+            />
+            <div v-else class="text-center py-5 text-muted">
+              <BarChart class="mb-2 opacity-50" :size="48" />
+              <p>No user registration data available</p>
             </div>
           </div>
         </div>
@@ -234,6 +244,8 @@ import { Users, Calendar, BookOpen, Star, TrendingUp, ChartBar as BarChart, Acti
 import { useAuthStore } from '@/stores/auth'
 import { appointmentsService, contactService, userService } from '@/services/firestore'
 import { initializeDatabase, checkDatabaseStatus } from '@/services/initializeDatabase'
+import LineChart from '@/components/charts/LineChart.vue'
+import { useChartData } from '@/composables/useChartData'
 
 const authStore = useAuthStore()
 
@@ -335,6 +347,11 @@ const systemStatus = ref<SystemStatusItem[]>([
 
 const initializingDatabase = ref(false)
 const databaseInitialized = ref(false)
+const chartLoading = ref(false)
+const userTrendLabels = ref<string[]>([])
+const userTrendData = ref<number[]>([])
+
+const chartData = useChartData()
 
 const loadDashboardData = async () => {
   try {
@@ -371,6 +388,21 @@ const handleInitializeDatabase = async () => {
   }
 }
 
+const loadUserRegistrationChart = async () => {
+  chartLoading.value = true
+  try {
+    const data = await chartData.loadUserRegistrationTrend(6)
+    userTrendLabels.value = data.map(d =>
+      d.date.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
+    )
+    userTrendData.value = data.map(d => d.value)
+  } catch (error) {
+    console.error('Error loading user registration chart:', error)
+  } finally {
+    chartLoading.value = false
+  }
+}
+
 const checkDatabase = async () => {
   try {
     const status = await checkDatabaseStatus()
@@ -384,6 +416,7 @@ const checkDatabase = async () => {
 onMounted(() => {
   checkDatabase()
   loadDashboardData()
+  loadUserRegistrationChart()
 })
 </script>
 
