@@ -3,7 +3,8 @@ import { useAuthStore } from '@/stores/auth'
 
 // Import components
 import Home from '@/views/Home.vue'
-import MentalHealthAI from '@/views/MentalHealthAI.vue'
+import InfoList from '@/views/InfoList.vue'
+import InfoTopic from '@/views/InfoTopic.vue'
 import SupportMap from '@/views/SupportMap.vue'
 import CourseBooking from '@/views/CourseBooking.vue'
 import ResourcesList from '@/views/ResourcesList.vue'
@@ -32,9 +33,14 @@ const router = createRouter({
       component: Home
     },
     {
-      path: '/ai-support',
-      name: 'MentalHealthAI',
-      component: MentalHealthAI
+      path: '/info',
+      name: 'InfoList',
+      component: InfoList
+    },
+    {
+      path: '/info/:slug',
+      name: 'InfoTopic',
+      component: InfoTopic
     },
     {
       path: '/support/map',
