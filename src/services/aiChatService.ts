@@ -43,7 +43,7 @@ class AIChatService {
 
   constructor() {
     this.model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-lite',
+      model: 'gemini-2.0-flash-exp',
       generationConfig: {
         temperature: 0.7,
         topP: 0.8,
