@@ -81,7 +81,7 @@ The platform has been transformed to feature an AI-powered mental health support
 ## AI Configuration
 
 ### Model Used
-- **Model**: `gemini-1.5-flash` (most affordable option)
+- **Model**: `gemini-2.0-flash-exp` (most affordable option)
 - **Temperature**: 0.7 (balanced creativity/consistency)
 - **Max Tokens**: 500 (concise responses)
 - **Top P**: 0.8
@@ -165,7 +165,7 @@ self-harm, please reach out immediately to:
 // Service initialization
 const genAI = new GoogleGenerativeAI(API_KEY)
 const model = genAI.getGenerativeModel({
-  model: 'gemini-1.5-flash',
+  model: 'gemini-2.0-flash-exp',
   generationConfig: { ... }
 })
 
@@ -212,7 +212,7 @@ VITE_GEMINI_API_KEY=AIzaSyAXgWUPUQ3ddqSkVgn-UVLktRetJbjRHrQ
 
 ## Cost Considerations
 
-### Gemini 1.5 Flash Pricing
+### Gemini 2.0 Flash Experimental Pricing
 - **Free Tier**: 15 requests per minute
 - **Paid**: $0.075 per 1M input tokens, $0.30 per 1M output tokens
 - **Our Config**: 500 max output tokens (very economical)
