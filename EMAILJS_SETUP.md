@@ -36,15 +36,68 @@ VITE_EMAILJS_PUBLIC_KEY=你的_PUBLIC_KEY_这里
 
 ## 模板变量配置
 
+### 重要：正确配置收件人地址
+
+**在 EmailJS 模板设置中，必须将 "To Email" 字段设置为动态变量 `{{to_email}}`，而不是固定的邮箱地址！**
+
+#### 步骤：
+1. 在 EmailJS Dashboard 中打开你的模板
+2. 找到 **"To Email"** 字段（通常在模板顶部的设置区域）
+3. **将该字段设置为**: `{{to_email}}`
+4. **不要**使用固定的邮箱地址（如 admin@example.com）
+
+这样，系统才能将邮件发送到不同用户的注册邮箱中。
+
+### 模板内容变量
+
 确保你的 EmailJS 模板包含以下变量：
 
-- `{{to_email}}` - 收件人邮箱
+- `{{to_email}}` - ⚠️ **必须设置在模板的 "To Email" 字段中**
 - `{{to_name}}` - 收件人姓名
 - `{{subject}}` - 邮件主题
 - `{{message}}` - 邮件内容
 - `{{from_name}}` - 发件人名称
 
+### 示例模板配置
+
+**模板设置区域：**
+```
+To Email: {{to_email}}
+From Name: YouthLink
+From Email: your-verified-email@gmail.com
+Subject: {{subject}}
+Reply To: noreply@youthlink.com
+```
+
+**模板内容：**
+```
+Dear {{to_name}},
+
+{{message}}
+
+Best regards,
+{{from_name}}
+```
+
 ## 常见问题
+
+### 邮件总是发送到固定的邮箱地址
+
+**原因**：EmailJS 模板的 "To Email" 字段设置了固定的邮箱地址，而不是动态变量 `{{to_email}}`
+
+**解决方案**：
+1. 登录 [EmailJS Dashboard](https://dashboard.emailjs.com/)
+2. 点击 **"Email Templates"**
+3. 打开你正在使用的模板
+4. 在模板设置的顶部找到 **"To Email"** 字段
+5. **删除固定的邮箱地址**（如 admin@example.com）
+6. **输入**: `{{to_email}}`
+7. 保存模板
+8. 重新测试邮件发送功能
+
+这样配置后：
+- 管理员群发邮件时，每个用户会收到发送到自己注册邮箱的邮件
+- 用户预订课程时，确认邮件会发送到用户自己的注册邮箱
 
 ### "The Public Key is invalid" 错误
 
@@ -66,6 +119,8 @@ VITE_EMAILJS_PUBLIC_KEY=你的_PUBLIC_KEY_这里
 
 ## 测试配置
 
+### 步骤 1: 检查初始化日志
+
 重启开发服务器后，打开浏览器控制台，你应该看到：
 
 ```
@@ -77,3 +132,41 @@ EmailJS initialized with config: {
 ```
 
 如果看到错误信息，说明配置有问题。
+
+### 步骤 2: 测试邮件发送
+
+#### 测试课程预订邮件：
+1. 登录到系统
+2. 访问 **Course Booking** 页面
+3. 选择一个课程并预订
+4. 检查你的注册邮箱（而不是固定的管理员邮箱）是否收到确认邮件
+
+#### 测试群发邮件：
+1. 以管理员身份登录
+2. 访问 **Admin Dashboard > Bulk Email**
+3. 选择几个测试用户
+4. 发送测试邮件
+5. 检查每个用户的注册邮箱是否都收到了邮件
+
+### 验证代码正确性
+
+应用代码已经正确实现：
+
+**课程预订邮件** (`CourseBooking.vue`):
+```javascript
+emailService.sendBookingConfirmation({
+  to_email: authStore.user.email,  // ✅ 使用用户的注册邮箱
+  to_name: authStore.user.displayName,
+  // ...
+})
+```
+
+**群发邮件** (`BulkEmail.vue`):
+```javascript
+const recipients = selectedUsers.value.map(user => ({
+  email: user.email,  // ✅ 使用每个用户的注册邮箱
+  name: user.displayName || 'User'
+}))
+```
+
+如果邮件仍然发送到固定地址，问题出在 EmailJS 模板配置，而不是代码。
