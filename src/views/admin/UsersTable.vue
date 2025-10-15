@@ -30,15 +30,7 @@
       <button type="button" class="btn-close" @click="successMessage = ''"></button>
     </div>
 
-    <div v-if="!authStore.initialized" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <p class="text-muted mt-2">Initializing...</p>
-    </div>
-
     <BaseDataTable
-      v-else
       :columns="columns"
       :data="tableState.paginatedData.value"
       :model-value="{
@@ -179,7 +171,7 @@ const error = ref('')
 const successMessage = ref('')
 const selectedUser = ref<UserTableData | null>(null)
 
-const currentUserId = computed(() => authStore.user?.id || null)
+const currentUserId = computed(() => authStore.user?.id)
 
 const columns = [
   { field: 'displayName', header: 'User', sortable: true, filterable: true },
@@ -313,11 +305,8 @@ const formatDate = (date: Date): string => {
   })
 }
 
-onMounted(async () => {
-  if (!authStore.initialized) {
-    await authStore.initializeAuth()
-  }
-  await loadUsers()
+onMounted(() => {
+  loadUsers()
 })
 </script>
 

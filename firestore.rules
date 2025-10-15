@@ -77,47 +77,7 @@ service cloud.firestore {
     match /user_preferences/{userId} {
       allow read, write: if isOwner(userId);
     }
-
-    // Courses collection - public read, admin write
-    match /courses/{courseId} {
-      allow read: if true; // Public can view available courses
-      allow write: if isAdmin();
-    }
-
-    // Course instances - public read, admin write
-    match /course_instances/{instanceId} {
-      allow read: if true; // Public can view course schedules
-      allow write: if isAdmin();
-    }
-
-    // Course bookings - users can manage their own bookings, admins can manage all
-    match /course_bookings/{bookingId} {
-      allow read: if isAuthenticated() &&
-        (request.auth.uid == resource.data.userId || isAdmin());
-      allow create: if isAuthenticated() &&
-        request.auth.uid == request.resource.data.userId;
-      allow update, delete: if isAuthenticated() &&
-        (request.auth.uid == resource.data.userId || isAdmin());
-    }
-
-    // Course schedules - public read, admin write
-    match /course_schedules/{scheduleId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Course exceptions - public read, admin write
-    match /course_exceptions/{exceptionId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // One-time sessions - public read, admin write
-    match /one_time_sessions/{sessionId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
+    
     // Deny all other requests
     match /{document=**} {
       allow read, write: if false;
