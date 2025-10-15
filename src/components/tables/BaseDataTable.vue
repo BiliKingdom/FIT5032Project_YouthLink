@@ -84,14 +84,16 @@
             </td>
           </tr>
           <tr v-else v-for="(item, index) in data" :key="getRowKey(item, index)">
-            <td v-for="column in columns" :key="`${getRowKey(item, index)}-${column.field}`">
-              <slot :name="`cell-${column.field}`" :item="item" :field="column.field">
-                {{ formatCellValue(item[column.field], column) }}
-              </slot>
-            </td>
-            <td v-if="$slots.actions" class="text-center">
-              <slot name="actions" :item="item"></slot>
-            </td>
+            <template v-if="item">
+              <td v-for="column in columns" :key="`${getRowKey(item, index)}-${column.field}`">
+                <slot :name="`cell-${column.field}`" :item="item" :field="column.field">
+                  {{ formatCellValue(item[column.field], column) }}
+                </slot>
+              </td>
+              <td v-if="$slots.actions" class="text-center">
+                <slot name="actions" :item="item"></slot>
+              </td>
+            </template>
           </tr>
         </tbody>
       </table>
@@ -264,6 +266,8 @@ const onRowsPerPageChange = (rows: number) => {
 }
 
 const getRowKey = (item: T, index: number): string | number => {
+  if (!item) return index
+
   if (typeof props.rowKey === 'function') {
     return props.rowKey(item)
   }

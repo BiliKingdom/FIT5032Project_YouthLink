@@ -15,14 +15,35 @@ export const usersTableService = {
       const result = await userService.getAll()
 
       if (result.success && result.data) {
-        const users = result.data.map((user: any) => ({
-          id: user.id,
-          displayName: user.displayName || 'Unknown',
-          email: user.email || '',
-          role: user.role || 'user',
-          createdAt: user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt),
-          status: 'active' as const
-        }))
+        const users = result.data.map((user: any) => {
+          let createdAtDate: Date
+
+          try {
+            if (user.createdAt?.toDate) {
+              createdAtDate = user.createdAt.toDate()
+            } else if (user.createdAt instanceof Date) {
+              createdAtDate = user.createdAt
+            } else if (typeof user.createdAt === 'string') {
+              createdAtDate = new Date(user.createdAt)
+            } else if (user.createdAt?.seconds) {
+              createdAtDate = new Date(user.createdAt.seconds * 1000)
+            } else {
+              createdAtDate = new Date()
+            }
+          } catch (error) {
+            console.warn('Error parsing createdAt for user:', user.id, error)
+            createdAtDate = new Date()
+          }
+
+          return {
+            id: user.id,
+            displayName: user.displayName || 'Unknown',
+            email: user.email || '',
+            role: user.role || 'user',
+            createdAt: createdAtDate,
+            status: user.status || 'active' as const
+          }
+        })
 
         return { success: true, data: users }
       }
