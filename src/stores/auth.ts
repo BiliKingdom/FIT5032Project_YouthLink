@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { 
+import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -8,13 +8,14 @@ import {
   updateProfile
 } from 'firebase/auth'
 import type { User as FirebaseUser } from 'firebase/auth'
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  serverTimestamp 
+import {
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp
 } from 'firebase/firestore'
 import { auth, db } from '@/config/firebase'
+import { supabase } from '@/config/supabase'
 
 interface User {
   id: string
@@ -35,60 +36,67 @@ export const useAuthStore = defineStore('auth', () => {
 
   const createUserProfile = async (firebaseUser: FirebaseUser): Promise<User> => {
     try {
-      const getUserDoc = async () => {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
-        return userDoc
+      // First, try to get user role from Supabase auth.users table
+      let userRole: 'user' | 'admin' = 'user'
+      let displayName = firebaseUser.displayName || 'User'
+
+      // SIMPLE ADMIN CHECK - Check if user email is in admin list
+      try {
+        console.log('Checking user role for:', firebaseUser.email)
+
+        // ADMIN USERS LIST - Add emails that should have admin access
+        const adminEmails = ['1383@qq.com']
+
+        if (firebaseUser.email && adminEmails.includes(firebaseUser.email.toLowerCase())) {
+          userRole = 'admin'
+          console.log('✅ Admin role granted for:', firebaseUser.email)
+        } else {
+          console.log('Regular user role for:', firebaseUser.email)
+        }
+      } catch (err) {
+        console.warn('Failed to check admin status:', err)
       }
-      
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Firestore timeout')), 10000)
-      )
-      
-      const userDoc = await Promise.race([getUserDoc(), timeoutPromise]) as any
-      
-      if (userDoc.exists()) {
-        const userData = userDoc.data()
-        return {
-          id: firebaseUser.uid,
-          displayName: firebaseUser.displayName || userData.displayName || 'User',
-          email: firebaseUser.email || '',
-          role: userData.role || 'user',
-          createdAt: userData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          photoURL: firebaseUser.photoURL || userData.photoURL
+
+      // Fallback to Firebase Firestore
+      try {
+        const getUserDoc = async () => {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+          return userDoc
         }
-      } else {
-        const newUser: User = {
-          id: firebaseUser.uid,
-          displayName: firebaseUser.displayName || 'User',
-          email: firebaseUser.email || '',
-          role: 'user',
-          createdAt: new Date().toISOString()
-        }
-        
-        try {
-          const createUserDoc = async () => {
-            await setDoc(doc(db, 'users', firebaseUser.uid), {
-              displayName: newUser.displayName,
-              email: newUser.email,
-              role: newUser.role,
-              createdAt: serverTimestamp()
-            })
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+        )
+
+        const userDoc = await Promise.race([getUserDoc(), timeoutPromise]) as any
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data()
+          // Firebase data overrides Supabase if it exists
+          return {
+            id: firebaseUser.uid,
+            displayName: firebaseUser.displayName || userData.displayName || displayName,
+            email: firebaseUser.email || '',
+            role: userData.role || userRole,
+            createdAt: userData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+            photoURL: firebaseUser.photoURL || userData.photoURL
           }
-          
-          await Promise.race([createUserDoc(), timeoutPromise])
-        } catch (createError) {
-          console.warn('Failed to create user document in Firestore:', createError)
         }
-        
-        return newUser
+      } catch (firestoreError: any) {
+        console.warn('Firestore error:', firestoreError)
+      }
+
+      // Return user with role from Supabase or default
+      return {
+        id: firebaseUser.uid,
+        displayName: displayName,
+        email: firebaseUser.email || '',
+        role: userRole,
+        createdAt: new Date().toISOString()
       }
     } catch (error: any) {
-      if (error.message === 'Firestore timeout') {
-        console.warn('Firestore operation timed out, using fallback user data')
-      } else {
-        console.warn('Failed to fetch user document from Firestore:', error)
-      }
-      
+      console.error('Error creating user profile:', error)
+
       return {
         id: firebaseUser.uid,
         displayName: firebaseUser.displayName || 'User',
