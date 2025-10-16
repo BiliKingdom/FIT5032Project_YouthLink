@@ -1,16 +1,15 @@
-const {setGlobalOptions} = require("firebase-functions");
-const {onCall} = require("firebase-functions/v2/https");
-const {onRequest} = require("firebase-functions/v2/https");
-const {defineSecret} = require("firebase-functions/params");
-const {GoogleGenerativeAI} = require("@google/generative-ai");
+const { setGlobalOptions } = require("firebase-functions");
+const { onCall, onRequest } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const admin = require("firebase-admin");
-const logger = require("firebase-functions/logger");
+const { logger } = require("firebase-functions");
 
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 admin.initializeApp();
 
-setGlobalOptions({maxInstances: 10});
+setGlobalOptions({ maxInstances: 10 });
 
 exports.aiChat = onCall({
   cors: true,
@@ -18,7 +17,7 @@ exports.aiChat = onCall({
   secrets: [geminiApiKey],
 }, async (request) => {
   try {
-    const {message, userId} = request.data;
+    const { message, userId } = request.data;
 
     if (!message || typeof message !== "string") {
       throw new Error("Invalid message parameter");
@@ -105,7 +104,7 @@ exports.aiChatHttp = onRequest({
   }
 
   try {
-    const {message, userId} = req.body;
+    const { message, userId } = req.body;
 
     if (!message || typeof message !== "string") {
       res.status(400).json({error: "Invalid message parameter"});
