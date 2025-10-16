@@ -38,51 +38,6 @@
       </div>
     </section>
 
-    <!-- <section class="info-section py-5">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-10 mx-auto">
-            <div class="row g-4">
-              <div class="col-md-4">
-                <div class="info-card">
-                  <div class="info-icon">
-                    <Brain :size="32" />
-                  </div>
-                  <h4 class="fw-bold mb-2">Understanding Support</h4>
-                  <p class="text-muted mb-0">
-                    Learn about anxiety, depression, stress, and other mental health topics in language
-                    that makes sense.
-                  </p>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="info-card">
-                  <div class="info-icon">
-                    <Lightbulb :size="32" />
-                  </div>
-                  <h4 class="fw-bold mb-2">Coping Strategies</h4>
-                  <p class="text-muted mb-0">
-                    Get practical, evidence-based techniques to manage difficult emotions and situations.
-                  </p>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="info-card">
-                  <div class="info-icon">
-                    <MapPin :size="32" />
-                  </div>
-                  <h4 class="fw-bold mb-2">Professional Help</h4>
-                  <p class="text-muted mb-0">
-                    Know when and how to seek professional support. We'll guide you to the right resources.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section> -->
-
     <section class="how-it-works py-5 bg-light">
       <div class="container">
         <div class="row">
