@@ -16,18 +16,18 @@
         <div class="col-md-2 mb-4">
           <h6 class="text-primary mb-3">Quick Links</h6>
           <ul class="list-unstyled">
-            <li><router-link to="/info" class="text-light-emphasis text-decoration-none">Mental Health Info</router-link></li>
+            <!-- <li><router-link to="/info" class="text-light-emphasis text-decoration-none">Mental Health Info</router-link></li> -->
             <li><router-link to="/support/map" class="text-light-emphasis text-decoration-none">Find Services</router-link></li>
             <li><router-link to="/resources/list" class="text-light-emphasis text-decoration-none">Resources</router-link></li>
-            <li><router-link to="/involved" class="text-light-emphasis text-decoration-none">Get Involved</router-link></li>
+            <li><router-link to="/contact" class="text-light-emphasis text-decoration-none">Contact Us</router-link></li>
+            <!-- <li><router-link to="/involved" class="text-light-emphasis text-decoration-none">Get Involved</router-link></li> -->
           </ul>
         </div>
         
         <div class="col-md-3 mb-4">
           <h6 class="text-primary mb-3">Support</h6>
           <ul class="list-unstyled">
-            <li><router-link to="/support/book" class="text-light-emphasis text-decoration-none">Book Appointment</router-link></li>
-            <li><router-link to="/contact" class="text-light-emphasis text-decoration-none">Contact Us</router-link></li>
+            <li><router-link to="/courses/book" class="text-light-emphasis text-decoration-none">Book Appointment</router-link></li>
             <li><router-link to="/about" class="text-light-emphasis text-decoration-none">About Us</router-link></li>
             <li><router-link to="/accessibility" class="text-light-emphasis text-decoration-none">Accessibility</router-link></li>
           </ul>

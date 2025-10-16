@@ -51,7 +51,7 @@
           <div class="col-md-3 mb-4">
             <div class="stat-item">
               <MapPin class="text-success mb-2" :size="48" />
-              <h3 class="fw-bold text-success">25+</h3>
+              <h3 class="fw-bold text-success">10+</h3>
               <p class="text-muted">Service Locations</p>
             </div>
           </div>
@@ -140,7 +140,7 @@
             </div>
           </div>
 
-          <div class="col-md-6 col-lg-4">
+          <!-- <div class="col-md-6 col-lg-4">
             <div class="card h-100 border-0 shadow-sm">
               <div class="card-body text-center p-4">
                 <div class="feature-icon bg-info bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
@@ -155,10 +155,10 @@
                 </router-link>
               </div>
             </div>
-          </div>
+          </div> -->
 
 
-          <div class="col-md-6 col-lg-4">
+          <!-- <div class="col-md-6 col-lg-4">
             <div class="card h-100 border-0 shadow-sm">
               <div class="card-body text-center p-4">
                 <div class="feature-icon bg-danger bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
@@ -173,7 +173,7 @@
                 </router-link>
               </div>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
     </section>

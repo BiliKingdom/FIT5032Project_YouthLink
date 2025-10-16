@@ -78,7 +78,7 @@
                 <div v-else class="text-center py-4">
                   <Calendar class="text-muted mb-2" :size="32" />
                   <p class="text-muted">No appointments scheduled</p>
-                  <router-link to="/support/book" class="btn btn-primary btn-sm">
+                  <router-link to="/courses/book" class="btn btn-primary btn-sm">
                     Book Appointment
                   </router-link>
                 </div>
@@ -162,14 +162,14 @@
                 <hr class="my-4">
 
                 <div class="d-flex gap-2 flex-wrap">
-                  <button class="btn btn-outline-primary">
+                  <!-- <button class="btn btn-outline-primary">
                     <Edit class="me-2" :size="16" />
                     Edit Profile
                   </button>
                   <button class="btn btn-outline-secondary">
                     <Shield class="me-2" :size="16" />
                     Change Password
-                  </button>
+                  </button> -->
                   <button class="btn btn-outline-danger" @click="confirmDeleteAccount">
                     <Trash2 class="me-2" :size="16" />
                     Delete Account
