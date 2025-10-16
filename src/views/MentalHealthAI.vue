@@ -38,7 +38,7 @@
       </div>
     </section>
 
-    <section class="info-section py-5">
+    <!-- <section class="info-section py-5">
       <div class="container">
         <div class="row">
           <div class="col-lg-10 mx-auto">
@@ -81,7 +81,7 @@
           </div>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <section class="how-it-works py-5 bg-light">
       <div class="container">

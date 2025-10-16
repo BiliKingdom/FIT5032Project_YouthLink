@@ -76,7 +76,7 @@
         </div>
       </div>
 
-      <div class="col-lg-8">
+      <!-- <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
           <div class="card-header bg-white">
             <h5 class="mb-0">
@@ -102,9 +102,9 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
-      <div class="col-lg-4">
+      <!-- <div class="col-lg-4">
         <div class="card border-0 shadow-sm">
           <div class="card-header bg-white">
             <h5 class="mb-0">
@@ -156,7 +156,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>

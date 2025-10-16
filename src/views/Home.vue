@@ -195,7 +195,7 @@
                 style="max-height: 300px; object-fit: cover; width: 100%;"
               >
             </div>
-            <div class="row g-3 justify-content-center">
+            <!-- <div class="row g-3 justify-content-center">
               <div class="col-sm-6 col-md-4">
                 <div class="p-3 bg-white bg-opacity-10 rounded">
                   <Phone class="mb-2" :size="24" />
@@ -217,7 +217,7 @@
                   <div>000</div>
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
