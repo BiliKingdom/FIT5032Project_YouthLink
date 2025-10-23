@@ -44,7 +44,7 @@
           </div>
 
           <!-- My Appointments -->
-          <div class="col-md-6">
+          <!-- <div class="col-md-6">
             <div class="card shadow-sm border-0">
               <div class="card-header">
                 <h5 class="mb-0">
@@ -84,7 +84,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- Account Settings -->
           <div class="col-12">

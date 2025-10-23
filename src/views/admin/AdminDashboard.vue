@@ -5,7 +5,7 @@
         <h1 class="display-6 fw-bold mb-2">Admin Dashboard</h1>
         <p class="text-muted">Welcome back, {{ authStore.user?.displayName }}! Manage your mental health platform</p>
       </div>
-      <div class="d-flex gap-2">
+      <!-- <div class="d-flex gap-2">
         <button class="btn btn-outline-primary">
           <Download class="me-2" :size="16" />
           Export Data
@@ -19,11 +19,11 @@
           <Plus class="me-2" :size="16" />
           {{ initializingDatabase ? 'Initializing...' : databaseInitialized ? 'Database Ready' : 'Initialize Database' }}
         </button>
-      </div>
+      </div> -->
     </div>
 
     <!-- Database Initialization Alert -->
-    <div v-if="!databaseInitialized && !initializingDatabase" class="alert alert-info mb-4">
+    <!-- <div v-if="!databaseInitialized && !initializingDatabase" class="alert alert-info mb-4">
       <div class="d-flex align-items-center">
         <AlertCircle class="me-2" :size="20" />
         <div class="flex-grow-1">
@@ -31,7 +31,7 @@
           <p class="mb-0">Click "Initialize Database" to set up sample data including mental health resources, service locations, and system settings.</p>
         </div>
       </div>
-    </div>
+    </div> -->
     <!-- Stats Cards -->
     <div class="row g-4 mb-5">
       <div class="col-md-3">
@@ -51,7 +51,7 @@
         </div>
       </div>
 
-      <div class="col-md-3">
+      <!-- <div class="col-md-3">
         <div class="card border-0 shadow-sm">
           <div class="card-body">
             <div class="d-flex align-items-center">
@@ -66,7 +66,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <div class="col-md-3">
         <div class="card border-0 shadow-sm">
@@ -85,7 +85,7 @@
         </div>
       </div>
 
-      <div class="col-md-3">
+      <!-- <div class="col-md-3">
         <div class="card border-0 shadow-sm">
           <div class="card-body">
             <div class="d-flex align-items-center">
@@ -100,7 +100,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <div class="row g-4">
@@ -136,7 +136,7 @@
       </div>
 
       <!-- Recent Activity -->
-      <div class="col-lg-4">
+      <!-- <div class="col-lg-4">
         <div class="card border-0 shadow-sm">
           <div class="card-header">
             <h5 class="mb-0">
@@ -158,7 +158,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Quick Actions -->
       <div class="col-lg-6">

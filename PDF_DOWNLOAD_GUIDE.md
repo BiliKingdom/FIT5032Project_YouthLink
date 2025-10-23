@@ -26,7 +26,7 @@ The YouthLink platform now supports downloading articles as professionally forma
 ### From Resources List Page (`/resources/list`)
 1. Browse the resources table
 2. Find an article you want to download
-3. Click the **Download** button (📥 icon) in the Actions column
+3. Click the **Download** button  in the Actions column
 4. PDF will automatically download to your device
 
 ### From Article Detail Page (`/resources/{id}`)
