@@ -44,6 +44,24 @@
           </div>
           <div class="card-body p-0">
             <div id="map" style="height: 500px; width: 100%;" ref="mapContainer"></div>
+            <div v-if="weatherData" class="weather-overlay">
+              <div class="weather-card">
+                <div class="d-flex align-items-center">
+                  <img :src="getWeatherIconUrl(weatherData.icon)" :alt="weatherData.description" class="weather-icon" />
+                  <div>
+                    <div class="weather-temp">{{ weatherData.temperature }}°C</div>
+                    <div class="weather-desc text-capitalize">{{ weatherData.description }}</div>
+                  </div>
+                </div>
+                <div class="weather-details mt-2">
+                  <div class="d-flex justify-content-between text-sm">
+                    <span>Feels like: {{ weatherData.feelsLike }}°C</span>
+                    <span>Wind: {{ weatherData.windSpeed }} km/h</span>
+                  </div>
+                  <div class="text-sm mt-1">Humidity: {{ weatherData.humidity }}%</div>
+                </div>
+              </div>
+            </div>
             <div v-if="routeInfo && showingRoute" class="route-info-overlay">
               <div class="route-info-card">
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -365,13 +383,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { MapPin, Search, Phone, TriangleAlert as AlertTriangle, Navigation, Eye, Mail, Globe, Users } from 'lucide-vue-next'
 import { serviceLocationsService } from '@/services/firestore'
-import { 
-  getCurrentLocation, 
-  calculateDistance, 
+import {
+  getCurrentLocation,
+  calculateDistance,
   geocodeAddress,
   type ServiceLocation,
-  type Coordinates 
+  type Coordinates
 } from '@/services/locationService'
+import { getWeatherByCoordinates, getWeatherIconUrl, type WeatherData } from '@/services/weatherService'
 import L from 'leaflet'
 
 // Fix for default markers in Leaflet
@@ -403,6 +422,7 @@ const userLocation = ref<Coordinates | null>(null)
 const selectedService = ref<ServiceLocation | null>(null)
 const showingRoute = ref(false)
 const loadingRoute = ref(false)
+const weatherData = ref<WeatherData | null>(null)
 
 const filteredServices = computed(() => {
   let filtered = [...services.value]
@@ -539,11 +559,14 @@ const requestLocation = async () => {
     const location = await getCurrentLocation()
     userLocation.value = location
     locationPermissionGranted.value = true
-    
+
     // Calculate distances and update map
     calculateDistances()
     addUserLocationToMap()
-    
+
+    // Fetch weather data
+    fetchWeatherData(location)
+
   } catch (error: any) {
     locationPermissionDenied.value = true
     if (error.code === 1) {
@@ -560,19 +583,29 @@ const requestLocation = async () => {
 
 const searchByAddress = async () => {
   if (!searchLocation.value.trim()) return
-  
+
   try {
     const coordinates = await geocodeAddress(searchLocation.value + ', Melbourne, Australia')
     if (coordinates) {
       userLocation.value = coordinates
       calculateDistances()
       addUserLocationToMap()
+      fetchWeatherData(coordinates)
       locationError.value = ''
     } else {
       locationError.value = 'Address not found. Please try a different search term.'
     }
   } catch (error) {
     locationError.value = 'Error searching for address. Please try again.'
+  }
+}
+
+const fetchWeatherData = async (coordinates: Coordinates) => {
+  try {
+    const weather = await getWeatherByCoordinates(coordinates)
+    weatherData.value = weather
+  } catch (error) {
+    console.error('Error fetching weather data:', error)
   }
 }
 
@@ -755,18 +788,20 @@ const getGoogleMapsUrl = () => {
 onMounted(() => {
   initializeMap()
   loadServices()
-  
+
   // Try to get user location automatically (but don't force it)
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        userLocation.value = {
+        const location = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         }
+        userLocation.value = location
         locationPermissionGranted.value = true
         calculateDistances()
         addUserLocationToMap()
+        fetchWeatherData(location)
       },
       () => {
         // Silently fail - user can manually enable location later
@@ -878,5 +913,49 @@ onUnmounted(() => {
 .route-info-card .btn-close {
   padding: 0.25rem;
   font-size: 0.75rem;
+}
+
+.weather-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  max-width: 280px;
+}
+
+.weather-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #dee2e6;
+}
+
+.weather-icon {
+  width: 60px;
+  height: 60px;
+  margin-right: 0.5rem;
+}
+
+.weather-temp {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #0066CC;
+}
+
+.weather-desc {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.weather-details {
+  padding-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.text-sm {
+  font-size: 0.875rem;
 }
 </style>
